@@ -28,7 +28,9 @@ type MergedBookingData = Booking & {
   guests: Guest[];
 };
 
-export default function AdminDashboard() {
+import dynamic from "next/dynamic";
+
+function AdminDashboard() {
   const router = useRouter();
   
   // Auth & Settings state
@@ -74,11 +76,13 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     // Load Settings
-    const savedSettings = localStorage.getItem("hotelSettings");
-    if (savedSettings) {
-      try {
-        setHotelSettings(JSON.parse(savedSettings));
-      } catch (e) {}
+    if (typeof window !== "undefined") {
+      const savedSettings = localStorage.getItem("hotelSettings");
+      if (savedSettings) {
+        try {
+          setHotelSettings(JSON.parse(savedSettings));
+        } catch (e) {}
+      }
     }
 
     const checkSession = async () => {
@@ -263,9 +267,9 @@ export default function AdminDashboard() {
       const opt = {
         margin: 0,
         filename: `Bill_${selectedBooking.id}_${selectedBooking.primary_guest_name.replace(/\s+/g, '_')}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
       };
 
       html2pdf().set(opt).from(element).save().then(async () => {
@@ -1026,3 +1030,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+export default dynamic(() => Promise.resolve(AdminDashboard), { ssr: false });

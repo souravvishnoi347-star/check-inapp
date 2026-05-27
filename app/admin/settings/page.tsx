@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 
-export default function AdminSettings() {
+import dynamic from "next/dynamic";
+
+function AdminSettings() {
   const router = useRouter();
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -31,12 +33,14 @@ export default function AdminSettings() {
     checkSession();
 
     // Load settings from local storage
-    const saved = localStorage.getItem("hotelSettings");
-    if (saved) {
-      try {
-        setSettings(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse settings");
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem("hotelSettings");
+      if (saved) {
+        try {
+          setSettings(JSON.parse(saved));
+        } catch (e) {
+          console.error("Failed to parse settings");
+        }
       }
     }
   }, [router]);
@@ -224,3 +228,5 @@ export default function AdminSettings() {
     </div>
   );
 }
+
+export default dynamic(() => Promise.resolve(AdminSettings), { ssr: false });
