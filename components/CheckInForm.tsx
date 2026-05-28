@@ -17,6 +17,30 @@ interface AdditionalGuest {
   age: string;
 }
 
+const rotateImage = (file: File | Blob): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.height;
+      canvas.height = img.width;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('No canvas context'));
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(Math.PI / 2); // Rotate 90 degrees
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('Canvas toBlob failed'));
+      }, file.type || 'image/jpeg');
+    };
+    img.onerror = () => reject(new Error('Image load failed'));
+    img.src = url;
+  });
+};
+
 export default function CheckInForm() {
   const [primaryGuest, setPrimaryGuest] = useState<PrimaryGuest>({
     name: '',
@@ -46,7 +70,6 @@ export default function CheckInForm() {
     setAdditionalGuests((prev) => prev.filter((_, i) => i !== index));
     setIdFiles((prev) => {
       const newFiles = { ...prev };
-      // Shift subsequent files down by one to keep indices aligned with guests
       for (let i = index + 1; i <= additionalGuests.length; i++) {
         newFiles[i] = newFiles[i + 1];
       }
@@ -81,28 +104,40 @@ export default function CheckInForm() {
       return;
     }
 
-    // Set file temporarily and update status to scanning
     setIdFiles((prev) => ({ ...prev, [guestIndex]: file }));
     setIdStatus((prev) => ({ ...prev, [guestIndex]: 'scanning' }));
 
     try {
-      // Run Tesseract OCR on the image
+      const checkValid = (t: string) => {
+        const aadhaarRegex = /\d{4}\s?\d{4}\s?\d{4}/;
+        const panRegex = /[A-Z]{5}[0-9]{4}[A-Z]{1}/i;
+        const hasKeywords = ['GOVERNMENT OF INDIA', 'MALE', 'FEMALE', 'INCOME TAX', 'DOB', 'ELECTION', 'FATHER'].some(keyword => 
+          t.includes(keyword)
+        );
+        return aadhaarRegex.test(t) || panRegex.test(t) || hasKeywords;
+      };
+
+      // 1. Scan original image
       const { data: { text } } = await Tesseract.recognize(file, 'eng');
-      const textUpper = text.toUpperCase();
+      let isValid = checkValid(text.toUpperCase());
 
-      // Look for common Indian ID patterns or keywords
-      const aadhaarRegex = /\d{4}\s?\d{4}\s?\d{4}/;
-      const panRegex = /[A-Z]{5}[0-9]{4}[A-Z]{1}/i;
-      const hasKeywords = ['GOVERNMENT OF INDIA', 'MALE', 'FEMALE', 'INCOME TAX'].some(keyword => 
-        textUpper.includes(keyword)
-      );
+      // 2. If it fails, the ID might be rotated 90 degrees (landscape card shot in portrait)
+      if (!isValid) {
+        try {
+          const rotatedBlob = await rotateImage(file);
+          const { data: { text: textRotated } } = await Tesseract.recognize(rotatedBlob, 'eng');
+          isValid = checkValid(textRotated.toUpperCase());
+        } catch (rotErr) {
+          console.error("Rotation OCR failed:", rotErr);
+        }
+      }
 
-      if (aadhaarRegex.test(textUpper) || panRegex.test(textUpper) || hasKeywords) {
+      if (isValid) {
         setIdStatus((prev) => ({ ...prev, [guestIndex]: 'valid' }));
       } else {
         setIdStatus((prev) => ({ ...prev, [guestIndex]: 'invalid' }));
         setIdFiles((prev) => ({ ...prev, [guestIndex]: null }));
-        e.target.value = ''; // Reset input so user can try again
+        e.target.value = '';
       }
     } catch (error) {
       console.error("OCR Error:", error);
