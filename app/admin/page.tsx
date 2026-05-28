@@ -10,6 +10,7 @@ type Booking = {
   check_in_date: string;
   check_out_date: string;
   status: string;
+  total_amount?: number;
 };
 
 type Guest = {
@@ -40,7 +41,8 @@ function AdminDashboard() {
     hotelAddress: "ARYA NAGAR HARIDWAR UTTARAKHAND",
     gstin: "",
     contact: "+91 9528255318",
-    gstPercentage: 0
+    gstPercentage: 0,
+    extraBedCharge: 350
   });
   
   // Data state
@@ -55,6 +57,7 @@ function AdminDashboard() {
   const [roomNumber, setRoomNumber] = useState("");
   const [roomType, setRoomType] = useState("");
   const [ratePerNight, setRatePerNight] = useState("");
+  const [isExtraBed, setIsExtraBed] = useState(false);
   const [paymentMode, setPaymentMode] = useState("Cash");
   const [guestGst, setGuestGst] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
@@ -274,9 +277,10 @@ function AdminDashboard() {
 
       html2pdf().set(opt).from(element).save().then(async () => {
         try {
+          const currentCalc = getCalculations();
           await supabase
             .from("Bookings")
-            .update({ status: 'Checked-Out' })
+            .update({ status: 'Checked-Out', total_amount: currentCalc.grandTotal })
             .eq('id', selectedBooking.id);
           
           fetchData();
@@ -301,7 +305,7 @@ function AdminDashboard() {
 
   // Calculations for Live Preview
   const getCalculations = () => {
-    if (!selectedBooking) return { checkIn: "", checkOut: "", duration: 1, rate: 0, subtotal: 0, gstAmount: 0, grandTotal: 0, advance: 0, balance: 0 };
+    if (!selectedBooking) return { checkIn: "", checkOut: "", duration: 1, rate: 0, subtotal: 0, gstAmount: 0, grandTotal: 0, advance: 0, balance: 0, extraBedTotal: 0 };
     
     const checkInDate = new Date(selectedBooking.check_in_date);
     const checkOutDate = new Date(selectedBooking.check_out_date);
@@ -310,8 +314,9 @@ function AdminDashboard() {
     if (duration === 0) duration = 1;
 
     const rate = parseFloat(ratePerNight) || 0;
+    const extraBedTotal = isExtraBed ? ((hotelSettings.extraBedCharge || 350) * duration) : 0;
     
-    const subtotal = rate * duration;
+    const subtotal = (rate * duration) + extraBedTotal;
     const gstAmount = subtotal * ((hotelSettings.gstPercentage || 0) / 100);
     const grandTotal = subtotal + gstAmount;
 
@@ -322,7 +327,8 @@ function AdminDashboard() {
       rate,
       subtotal,
       gstAmount,
-      grandTotal
+      grandTotal,
+      extraBedTotal
     };
   };
 
@@ -450,11 +456,11 @@ function AdminDashboard() {
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
               <span className="text-sm font-medium text-gray-500 mb-1">Available Rooms</span>
-              <span className="text-3xl font-bold text-emerald-600">{20 - data.filter(b => b.status !== 'Checked-Out').length}</span>
+              <span className="text-3xl font-bold text-emerald-600">{25 - data.filter(b => b.status !== 'Checked-Out').length}</span>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
               <span className="text-sm font-medium text-gray-500 mb-1">Total Revenue</span>
-              <span className="text-3xl font-bold text-amber-600">Rs. 0</span>
+              <span className="text-3xl font-bold text-amber-600">Rs. {data.reduce((acc, b) => acc + (b.status === 'Checked-Out' ? (b.total_amount || 0) : 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           </div>
 
@@ -685,6 +691,18 @@ function AdminDashboard() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-transparent outline-none transition-all text-sm text-gray-900 bg-white uppercase"
                   />
                 </div>
+                <div className="flex items-center mt-2">
+                  <input
+                    type="checkbox"
+                    id="extraBed"
+                    checked={isExtraBed}
+                    onChange={(e) => setIsExtraBed(e.target.checked)}
+                    className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500 cursor-pointer"
+                  />
+                  <label htmlFor="extraBed" className="ml-2 text-sm font-bold text-gray-700 cursor-pointer">
+                    Add Extra Bed (Rs. {hotelSettings.extraBedCharge || 350}/night)
+                  </label>
+                </div>
               </div>
 
               <div className="pt-6 mt-6 border-t border-gray-200">
@@ -728,6 +746,7 @@ function AdminDashboard() {
                     <img src="/logo.png" alt="Hotel Logo" className="h-24 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                   </div>
                   <h1 className="text-4xl font-extrabold tracking-wider uppercase" style={{ color: '#111827' }}>{hotelSettings.hotelName}</h1>
+                  <p className="text-sm font-semibold mt-1 uppercase tracking-widest text-gray-500">Managed by Triloki Hospitality</p>
                   <p className="text-sm font-medium mt-2 tracking-wide uppercase" style={{ color: '#4b5563' }}>{hotelSettings.hotelAddress}</p>
                   
                   {hotelSettings.gstin && (
@@ -812,8 +831,16 @@ function AdminDashboard() {
                         <td className="py-3 px-4 border" style={{ borderColor: '#d1d5db', color: '#111827' }}>Room Charges (Room {roomNumber || '-'})</td>
                         <td className="py-3 px-4 border" style={{ borderColor: '#d1d5db', color: '#111827' }}>{calc.duration}</td>
                         <td className="py-3 px-4 border" style={{ borderColor: '#d1d5db', color: '#111827' }}>Rs. {calc.rate.toFixed(2)}</td>
-                        <td className="py-3 px-4 border" style={{ borderColor: '#d1d5db', color: '#111827' }}>Rs. {calc.subtotal.toFixed(2)}</td>
+                        <td className="py-3 px-4 border" style={{ borderColor: '#d1d5db', color: '#111827' }}>Rs. {(calc.rate * calc.duration).toFixed(2)}</td>
                       </tr>
+                      {isExtraBed && (
+                        <tr>
+                          <td className="py-3 px-4 border" style={{ borderColor: '#d1d5db', color: '#111827' }}>Extra Bed Charge</td>
+                          <td className="py-3 px-4 border" style={{ borderColor: '#d1d5db', color: '#111827' }}>{calc.duration}</td>
+                          <td className="py-3 px-4 border" style={{ borderColor: '#d1d5db', color: '#111827' }}>Rs. {(hotelSettings.extraBedCharge || 350).toFixed(2)}</td>
+                          <td className="py-3 px-4 border" style={{ borderColor: '#d1d5db', color: '#111827' }}>Rs. {calc.extraBedTotal.toFixed(2)}</td>
+                        </tr>
+                      )}
                       <tr style={{ backgroundColor: '#f9fafb' }}>
                         <td colSpan={3} className="py-2 px-4 border font-bold text-right uppercase text-xs" style={{ borderColor: '#d1d5db', color: '#111827' }}>Subtotal</td>
                         <td className="py-2 px-4 border font-bold" style={{ borderColor: '#d1d5db', color: '#111827' }}>Rs. {calc.subtotal.toFixed(2)}</td>

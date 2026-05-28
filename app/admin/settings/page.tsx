@@ -17,7 +17,8 @@ function AdminSettings() {
     hotelAddress: "ARYA NAGAR HARIDWAR UTTARAKHAND",
     gstin: "",
     contact: "+91 9528255318",
-    gstPercentage: 0
+    gstPercentage: 0,
+    extraBedCharge: 350
   });
 
   useEffect(() => {
@@ -49,7 +50,7 @@ function AdminSettings() {
     const { name, value } = e.target;
     setSettings(prev => ({
       ...prev,
-      [name]: name === 'gstPercentage' ? parseFloat(value) || 0 : value
+      [name]: (name === 'gstPercentage' || name === 'extraBedCharge') ? parseFloat(value) || 0 : value
     }));
   };
 
@@ -201,15 +202,29 @@ function AdminSettings() {
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Reception Contact</label>
-                <input
-                  type="text"
-                  name="contact"
-                  value={settings.contact}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-colors outline-none text-gray-800"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Reception Contact</label>
+                  <input
+                    type="text"
+                    name="contact"
+                    value={settings.contact}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-colors outline-none text-gray-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Default Extra Bed Charge (Rs.)</label>
+                  <input
+                    type="number"
+                    name="extraBedCharge"
+                    value={settings.extraBedCharge}
+                    onChange={handleChange}
+                    min="0"
+                    placeholder="e.g. 350"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-colors outline-none text-gray-800"
+                  />
+                </div>
               </div>
             </div>
 
