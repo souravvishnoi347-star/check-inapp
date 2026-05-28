@@ -354,6 +354,16 @@ function AdminDashboard() {
         matchesDate = bookingDate >= firstDayOfWeek;
       } else if (dateFilter === "This Month") {
         matchesDate = bookingDate.getMonth() === new Date().getMonth() && bookingDate.getFullYear() === new Date().getFullYear();
+      } else {
+        const selectedDate = new Date(dateFilter);
+        selectedDate.setHours(0, 0, 0, 0);
+        
+        const bIn = new Date(booking.check_in_date);
+        bIn.setHours(0, 0, 0, 0);
+        const bOut = new Date(booking.check_out_date);
+        bOut.setHours(0, 0, 0, 0);
+        
+        matchesDate = selectedDate >= bIn && selectedDate <= bOut;
       }
     }
 
@@ -448,19 +458,19 @@ function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
               <span className="text-sm font-medium text-gray-500 mb-1">Total Bookings</span>
-              <span className="text-3xl font-bold text-gray-900">{data.length}</span>
+              <span className="text-3xl font-bold text-gray-900">{filteredData.length}</span>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
               <span className="text-sm font-medium text-gray-500 mb-1">Active Guests</span>
-              <span className="text-3xl font-bold text-indigo-600">{data.filter(b => b.status !== 'Checked-Out').length}</span>
+              <span className="text-3xl font-bold text-indigo-600">{filteredData.filter(b => b.status !== 'Checked-Out').length}</span>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
               <span className="text-sm font-medium text-gray-500 mb-1">Available Rooms</span>
-              <span className="text-3xl font-bold text-emerald-600">{25 - data.filter(b => b.status !== 'Checked-Out').length}</span>
+              <span className="text-3xl font-bold text-emerald-600">{25 - filteredData.filter(b => b.status !== 'Checked-Out').length}</span>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
               <span className="text-sm font-medium text-gray-500 mb-1">Total Revenue</span>
-              <span className="text-3xl font-bold text-amber-600">Rs. {data.reduce((acc, b) => acc + (b.status === 'Checked-Out' ? (b.total_amount || 0) : 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span className="text-3xl font-bold text-amber-600">Rs. {filteredData.reduce((acc, b) => acc + (b.status === 'Checked-Out' ? (b.total_amount || 0) : 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           </div>
 
@@ -486,16 +496,27 @@ function AdminDashboard() {
               />
             </div>
             
-            <div className="w-full sm:w-auto">
+            <div className="w-full sm:w-auto flex items-center gap-2">
+              <input
+                type="date"
+                value={["All Time", "Today", "This Week", "This Month"].includes(dateFilter) ? "" : dateFilter}
+                onChange={(e) => setDateFilter(e.target.value || "All Time")}
+                className="w-full sm:w-auto p-2.5 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-medium text-gray-700"
+              />
               <select
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full p-2.5 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-medium text-gray-700"
+                value={["All Time", "Today", "This Week", "This Month"].includes(dateFilter) ? dateFilter : "Custom"}
+                onChange={(e) => {
+                  if (e.target.value !== "Custom") {
+                    setDateFilter(e.target.value);
+                  }
+                }}
+                className="w-full sm:w-auto p-2.5 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-medium text-gray-700"
               >
                 <option value="All Time">All Time</option>
                 <option value="Today">Today's Check-ins</option>
                 <option value="This Week">This Week</option>
                 <option value="This Month">This Month</option>
+                <option value="Custom" disabled hidden>Custom Date</option>
               </select>
             </div>
           </div>
