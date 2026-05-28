@@ -24,3 +24,8 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Override Tailwind v4's default oklch border colors which crash html2canvas/html2pdf */
+*, ::before, ::after {
+  border-color: #e5e7eb;
+}

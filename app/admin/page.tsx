@@ -767,7 +767,7 @@ function AdminDashboard() {
                     <img src="/logo.png" alt="Hotel Logo" className="h-24 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                   </div>
                   <h1 className="text-4xl font-extrabold tracking-wider uppercase" style={{ color: '#111827' }}>{hotelSettings.hotelName}</h1>
-                  <p className="text-sm font-semibold mt-1 uppercase tracking-widest text-gray-500">Managed by Triloki Hospitality</p>
+                  <p className="text-sm font-semibold mt-1 uppercase tracking-widest" style={{ color: '#6b7280' }}>Managed by Triloki Hospitality</p>
                   <p className="text-sm font-medium mt-2 tracking-wide uppercase" style={{ color: '#4b5563' }}>{hotelSettings.hotelAddress}</p>
                   
                   {hotelSettings.gstin && (
