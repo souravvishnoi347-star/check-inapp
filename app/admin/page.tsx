@@ -278,14 +278,33 @@ function AdminDashboard() {
       html2pdf().set(opt).from(element).save().then(async () => {
         try {
           const currentCalc = getCalculations();
-          await supabase
+          const { error: updateError } = await supabase
             .from("Bookings")
             .update({ status: 'Checked-Out', total_amount: currentCalc.grandTotal })
             .eq('id', selectedBooking.id);
           
-          fetchData();
+          if (updateError) {
+            console.error("Failed to update status:", updateError);
+            if (updateError.message?.includes("total_amount") || updateError.code === "PGRST204" || updateError.code === "42703") {
+              const { error: fallbackError } = await supabase
+                .from("Bookings")
+                .update({ status: 'Checked-Out' })
+                .eq('id', selectedBooking.id);
+                
+              if (!fallbackError) {
+                alert("WARNING: Guest checked out, but Revenue was NOT saved. You must add a 'total_amount' (numeric) column to your Supabase Bookings table for the Revenue tab to work!");
+                fetchData();
+              } else {
+                alert("Failed to update booking in database: " + fallbackError.message);
+              }
+            } else {
+              alert("Failed to update booking in database: " + updateError.message);
+            }
+          } else {
+            fetchData();
+          }
         } catch (err) {
-          console.error("Failed to update status:", err);
+          console.error("Unexpected error in PDF success handler:", err);
         }
         
         setIsModalOpen(false);
