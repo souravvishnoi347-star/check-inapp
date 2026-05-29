@@ -54,6 +54,9 @@ export default function CheckInForm() {
   const [idFiles, setIdFiles] = useState<{ [key: number]: File | null }>({});
   const [idStatus, setIdStatus] = useState<{ [key: number]: 'idle' | 'scanning' | 'valid' | 'invalid' }>({});
   
+  const [idBackFiles, setIdBackFiles] = useState<{ [key: number]: File | null }>({});
+  const [idBackStatus, setIdBackStatus] = useState<{ [key: number]: 'idle' | 'uploaded' }>({});
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -77,6 +80,22 @@ export default function CheckInForm() {
       return newFiles;
     });
     setIdStatus((prev) => {
+      const newStatus = { ...prev };
+      for (let i = index + 1; i <= additionalGuests.length; i++) {
+        newStatus[i] = newStatus[i + 1];
+      }
+      delete newStatus[additionalGuests.length];
+      return newStatus;
+    });
+    setIdBackFiles((prev) => {
+      const newFiles = { ...prev };
+      for (let i = index + 1; i <= additionalGuests.length; i++) {
+        newFiles[i] = newFiles[i + 1];
+      }
+      delete newFiles[additionalGuests.length];
+      return newFiles;
+    });
+    setIdBackStatus((prev) => {
       const newStatus = { ...prev };
       for (let i = index + 1; i <= additionalGuests.length; i++) {
         newStatus[i] = newStatus[i + 1];
@@ -147,6 +166,17 @@ export default function CheckInForm() {
     }
   };
 
+  const handleBackFileChange = (guestIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (!file) {
+      setIdBackFiles((prev) => ({ ...prev, [guestIndex]: null }));
+      setIdBackStatus((prev) => ({ ...prev, [guestIndex]: 'idle' }));
+      return;
+    }
+    setIdBackFiles((prev) => ({ ...prev, [guestIndex]: file }));
+    setIdBackStatus((prev) => ({ ...prev, [guestIndex]: 'uploaded' }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!allIdsValid) return;
@@ -155,6 +185,7 @@ export default function CheckInForm() {
 
     try {
       const uploadedUrls: { [key: number]: string } = {};
+      const uploadedBackUrls: { [key: number]: string } = {};
 
       const totalGuests = 1 + additionalGuests.length;
       
@@ -177,6 +208,16 @@ export default function CheckInForm() {
 
           uploadedUrls[i] = publicUrl;
         }
+
+        const backFile = idBackFiles[i];
+        if (backFile) {
+          const fileExt = backFile.name.split('.').pop();
+          const fileName = `back_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const { error } = await supabase.storage.from('id_proofs').upload(fileName, backFile);
+          if (error) throw error;
+          const { data: { publicUrl } } = supabase.storage.from('id_proofs').getPublicUrl(fileName);
+          uploadedBackUrls[i] = publicUrl;
+        }
       }
 
       // 2. Insert into Bookings
@@ -194,7 +235,7 @@ export default function CheckInForm() {
       const bookingId = bookingData.id;
 
       // 3. Prepare and Insert Guests
-      const guestsToInsert = [];
+      const guestsToInsert: any[] = [];
       
       // Primary Guest
       guestsToInsert.push({
@@ -202,7 +243,8 @@ export default function CheckInForm() {
         name: primaryGuest.name,
         age: parseInt(primaryGuest.age),
         phone: primaryGuest.phone || null,
-        id_image_url: uploadedUrls[0] || null
+        id_image_url: uploadedUrls[0] || null,
+        id_image_back_url: uploadedBackUrls[0] || null
       });
 
       // Additional Guests
@@ -212,7 +254,8 @@ export default function CheckInForm() {
           name: guest.name,
           age: parseInt(guest.age),
           phone: null,
-          id_image_url: uploadedUrls[i + 1] || null
+          id_image_url: uploadedUrls[i + 1] || null,
+          id_image_back_url: uploadedBackUrls[i + 1] || null
         });
       });
 
@@ -220,7 +263,17 @@ export default function CheckInForm() {
         .from('Guests')
         .insert(guestsToInsert);
 
-      if (guestsError) throw guestsError;
+      if (guestsError && guestsError.message?.includes('id_image_back_url')) {
+        alert("WARNING: The 'id_image_back_url' column is missing in your Supabase Guests table! The back images were not saved. Please add it.");
+        const fallbackGuests = guestsToInsert.map(g => {
+          const { id_image_back_url, ...rest } = g;
+          return rest;
+        });
+        const { error: fallbackError } = await supabase.from('Guests').insert(fallbackGuests);
+        if (fallbackError) throw fallbackError;
+      } else if (guestsError) {
+        throw guestsError;
+      }
 
       // 4. On successful save
       setIsSubmitted(true);
@@ -239,6 +292,8 @@ export default function CheckInForm() {
     setAdditionalGuests([]);
     setIdFiles({});
     setIdStatus({});
+    setIdBackFiles({});
+    setIdBackStatus({});
   };
 
   const totalGuests = 1 + additionalGuests.length;
@@ -434,46 +489,68 @@ export default function CheckInForm() {
                   : (additionalGuests[index - 1]?.name || `Guest ${index + 1}`);
 
                 const status = idStatus[index] || 'idle';
+                const backStatus = idBackStatus[index] || 'idle';
 
-                let buttonText = 'Choose File or Camera';
+                let buttonText = 'Front Side (Required)';
                 let buttonClasses = 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm';
-
                 if (status === 'scanning') {
-                  buttonText = 'Verifying ID...';
+                  buttonText = 'Verifying...';
                   buttonClasses = 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm animate-pulse';
                 } else if (status === 'valid') {
-                  buttonText = '✓ ID Verified';
+                  buttonText = '✓ Front Verified';
                   buttonClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm';
                 } else if (status === 'invalid') {
                   buttonText = 'Try Again';
                   buttonClasses = 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm';
                 }
 
+                let backButtonText = 'Back Side (Optional)';
+                let backButtonClasses = 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm';
+                if (backStatus === 'uploaded') {
+                  backButtonText = '✓ Back Uploaded';
+                  backButtonClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm';
+                }
+
                 return (
                   <div key={index} className="flex flex-col p-4 bg-slate-50 rounded-2xl border border-slate-100 gap-3 transition-all">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div>
+                      <div className="w-full sm:w-1/3">
                         <p className="font-medium text-slate-700 line-clamp-1">{guestName}'s ID</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Supported formats: JPG, PNG</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Formats: JPG, PNG</p>
                       </div>
                       
-                      <div className="relative w-full sm:w-auto shrink-0">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileChange(index, e)}
-                          disabled={status === 'scanning'}
-                          className={`absolute inset-0 w-full h-full opacity-0 z-10 ${status !== 'scanning' ? 'cursor-pointer' : ''}`}
-                          title="Upload ID"
-                        />
-                        <div className={`w-full text-center px-5 py-2.5 rounded-xl text-sm font-medium transition-colors border ${buttonClasses}`}>
-                          {buttonText}
+                      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-2/3 shrink-0">
+                        <div className="relative w-full">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileChange(index, e)}
+                            disabled={status === 'scanning'}
+                            className={`absolute inset-0 w-full h-full opacity-0 z-10 ${status !== 'scanning' ? 'cursor-pointer' : ''}`}
+                            title="Upload Front Side"
+                          />
+                          <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border ${buttonClasses}`}>
+                            {buttonText}
+                          </div>
+                        </div>
+
+                        <div className="relative w-full">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleBackFileChange(index, e)}
+                            className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+                            title="Upload Back Side"
+                          />
+                          <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border ${backButtonClasses}`}>
+                            {backButtonText}
+                          </div>
                         </div>
                       </div>
                     </div>
                     {status === 'invalid' && (
                       <p className="text-red-500 text-sm font-medium animate-in fade-in slide-in-from-top-1">
-                        Invalid ID detected: Please upload a clear photo of a valid Government ID
+                        Invalid ID detected: Please upload a clear photo of the Front Side of a valid Government ID
                       </p>
                     )}
                   </div>

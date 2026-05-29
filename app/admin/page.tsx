@@ -19,6 +19,7 @@ type Guest = {
   name: string;
   age: number;
   id_image_url: string;
+  id_image_back_url?: string;
   phone: string;
 };
 
@@ -971,19 +972,42 @@ function AdminDashboard() {
                         <p className="text-xs text-gray-500 mt-1">Age: {guest.age} {guest.phone ? `| Phone: ${guest.phone}` : ''}</p>
                       </div>
                     </div>
-                    <div className="p-4 flex-1 flex flex-col items-center justify-center bg-gray-100 min-h-[250px] relative group">
-                      {guest.id_image_url ? (
-                        <a href={guest.id_image_url} target="_blank" rel="noreferrer" className="block w-full h-full relative cursor-pointer">
-                          <img src={guest.id_image_url} alt={`${guest.name} ID`} className="w-full h-full object-contain max-h-[300px] rounded shadow-sm" />
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded">
-                            <span className="text-white font-medium bg-black/70 px-4 py-2 rounded-lg text-sm flex items-center gap-2">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                              Open Full Size
-                            </span>
-                          </div>
-                        </a>
+                    <div className="p-4 flex-1 flex flex-col gap-4 bg-gray-100 min-h-[250px]">
+                      {!guest.id_image_url && !guest.id_image_back_url ? (
+                        <div className="flex-1 flex items-center justify-center">
+                          <p className="text-gray-400 text-sm font-medium">No ID Image Uploaded</p>
+                        </div>
                       ) : (
-                        <p className="text-gray-400 text-sm font-medium">No ID Image Uploaded</p>
+                        <div className="flex flex-col gap-4">
+                          {guest.id_image_url && (
+                            <div className="relative group">
+                              <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">Front Side</p>
+                              <a href={guest.id_image_url} target="_blank" rel="noreferrer" className="block w-full relative cursor-pointer">
+                                <img src={guest.id_image_url} alt={`${guest.name} ID Front`} className="w-full object-contain max-h-[250px] rounded shadow-sm bg-white" />
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded">
+                                  <span className="text-white font-medium bg-black/70 px-3 py-1.5 rounded-lg text-xs flex items-center gap-2">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                    Open Full Size
+                                  </span>
+                                </div>
+                              </a>
+                            </div>
+                          )}
+                          {guest.id_image_back_url && (
+                            <div className="relative group pt-4 border-t border-gray-200">
+                              <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">Back Side</p>
+                              <a href={guest.id_image_back_url} target="_blank" rel="noreferrer" className="block w-full relative cursor-pointer">
+                                <img src={guest.id_image_back_url} alt={`${guest.name} ID Back`} className="w-full object-contain max-h-[250px] rounded shadow-sm bg-white" />
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded">
+                                  <span className="text-white font-medium bg-black/70 px-3 py-1.5 rounded-lg text-xs flex items-center gap-2">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                    Open Full Size
+                                  </span>
+                                </div>
+                              </a>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
