@@ -11,6 +11,8 @@ type Booking = {
   check_out_date: string;
   status: string;
   total_amount?: number;
+  agreed_price?: number;
+  room_number?: string;
 };
 
 type Guest = {
@@ -75,6 +77,8 @@ function AdminDashboard() {
   const [editingBooking, setEditingBooking] = useState<MergedBookingData | null>(null);
   const [editCheckIn, setEditCheckIn] = useState("");
   const [editCheckOut, setEditCheckOut] = useState("");
+  const [editRoomNumber, setEditRoomNumber] = useState("");
+  const [editAgreedPrice, setEditAgreedPrice] = useState("");
   const [editGuests, setEditGuests] = useState<Guest[]>([]);
 
   const invoiceRef = useRef<HTMLDivElement>(null);
@@ -205,6 +209,8 @@ function AdminDashboard() {
     setEditingBooking(booking);
     setEditCheckIn(booking.check_in_date);
     setEditCheckOut(booking.check_out_date);
+    setEditRoomNumber(booking.room_number || "");
+    setEditAgreedPrice(booking.agreed_price ? booking.agreed_price.toString() : "");
     setEditGuests(JSON.parse(JSON.stringify(booking.guests)));
     setIsEditModalOpen(true);
   };
@@ -221,7 +227,12 @@ function AdminDashboard() {
       setIsLoading(true);
       const { error: bookingError } = await supabase
         .from('Bookings')
-        .update({ check_in_date: editCheckIn, check_out_date: editCheckOut })
+        .update({ 
+          check_in_date: editCheckIn, 
+          check_out_date: editCheckOut,
+          room_number: editRoomNumber || null,
+          agreed_price: editAgreedPrice ? parseFloat(editAgreedPrice) : null
+        })
         .eq('id', editingBooking.id);
       
       if (bookingError) throw bookingError;
@@ -496,7 +507,9 @@ function AdminDashboard() {
                     <th className="px-6 py-4">Booking ID</th>
                     <th className="px-6 py-4">Primary Guest</th>
                     <th className="px-6 py-4">Check In</th>
-                    <th className="px-6 py-4">Check Out</th>
+                    <th className="px-6 py-4">Check-Out</th>
+                    <th className="px-6 py-4">Room No</th>
+                    <th className="px-6 py-4">Agreed Price</th>
                     <th className="px-6 py-4">Total Guests</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4 text-center">Action</th>
@@ -532,6 +545,12 @@ function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                           {new Date(booking.check_out_date).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-800">
+                          {booking.room_number || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-emerald-600 font-bold">
+                          {booking.agreed_price ? `Rs. ${booking.agreed_price}` : '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                           <span className="bg-gray-100 text-gray-700 py-1 px-3 rounded-full text-xs font-semibold">
@@ -1006,6 +1025,32 @@ function AdminDashboard() {
                         type="date" 
                         value={editCheckOut}
                         onChange={(e) => setEditCheckOut(e.target.value)}
+                        className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">Room & Price Details</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Room Number</label>
+                      <input 
+                        type="text" 
+                        value={editRoomNumber}
+                        onChange={(e) => setEditRoomNumber(e.target.value)}
+                        placeholder="e.g. 101"
+                        className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Agreed Price (Rs.)</label>
+                      <input 
+                        type="number" 
+                        value={editAgreedPrice}
+                        onChange={(e) => setEditAgreedPrice(e.target.value)}
+                        placeholder="e.g. 1500"
                         className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                       />
                     </div>

@@ -10,6 +10,7 @@ interface PrimaryGuest {
   phone: string;
   checkInDate: string;
   checkOutDate: string;
+  agreedPrice: string;
 }
 
 interface AdditionalGuest {
@@ -48,6 +49,7 @@ export default function CheckInForm() {
     phone: '',
     checkInDate: '',
     checkOutDate: '',
+    agreedPrice: '',
   });
 
   const [additionalGuests, setAdditionalGuests] = useState<AdditionalGuest[]>([]);
@@ -225,7 +227,8 @@ export default function CheckInForm() {
         .from('Bookings')
         .insert({
           check_in_date: primaryGuest.checkInDate,
-          check_out_date: primaryGuest.checkOutDate
+          check_out_date: primaryGuest.checkOutDate,
+          agreed_price: primaryGuest.agreedPrice ? parseFloat(primaryGuest.agreedPrice) : null
         })
         .select()
         .single();
@@ -288,7 +291,7 @@ export default function CheckInForm() {
 
   const handleReset = () => {
     setIsSubmitted(false);
-    setPrimaryGuest({ name: '', age: '', phone: '', checkInDate: '', checkOutDate: '' });
+    setPrimaryGuest({ name: '', age: '', phone: '', checkInDate: '', checkOutDate: '', agreedPrice: '' });
     setAdditionalGuests([]);
     setIdFiles({});
     setIdStatus({});
@@ -413,6 +416,19 @@ export default function CheckInForm() {
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-colors outline-none text-slate-700 bg-slate-50 focus:bg-white"
                   />
                 </div>
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-slate-600 mb-1">Agreed Price (Rs.) *</label>
+                <input
+                  type="number"
+                  name="agreedPrice"
+                  value={primaryGuest.agreedPrice}
+                  onChange={handlePrimaryChange}
+                  required
+                  min="0"
+                  placeholder="e.g. 1500"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-colors outline-none text-slate-700 bg-slate-50 focus:bg-white font-semibold"
+                />
               </div>
             </div>
           </div>

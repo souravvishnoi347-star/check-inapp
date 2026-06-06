@@ -37,7 +37,7 @@ function BillsHistoryPage() {
 
   const [data, setData] = useState<MergedBookingData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filterMode, setFilterMode] = useState<"All Time" | "Date">("Date");
+  const [filterMode, setFilterMode] = useState<"All Time" | "Date">("All Time");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
 
   useEffect(() => {
