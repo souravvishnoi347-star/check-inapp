@@ -284,11 +284,17 @@ function AdminDashboard() {
         margin: 0,
         filename: `Bill_${selectedBooking.id}_${selectedBooking.primary_guest_name.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
       };
 
+      // Temporarily fix scroll issue for html2canvas
+      const parentElement = element.parentElement;
+      const originalOverflow = parentElement ? parentElement.style.overflow : '';
+      if (parentElement) parentElement.style.overflow = 'visible';
+
       html2pdf().set(opt).from(element).save().then(async () => {
+        if (parentElement) parentElement.style.overflow = originalOverflow;
         try {
           const currentCalc = getCalculations();
           const { error: updateError } = await supabase
@@ -323,6 +329,7 @@ function AdminDashboard() {
         setIsModalOpen(false);
         setIsDownloading(false);
       }).catch((err: any) => {
+        if (parentElement) parentElement.style.overflow = originalOverflow;
         console.error("PDF Generation failed:", err);
         alert("Failed to generate PDF: " + (err?.message || JSON.stringify(err)));
         setIsDownloading(false);

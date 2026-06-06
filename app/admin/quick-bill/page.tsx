@@ -174,11 +174,16 @@ function QuickBillPage() {
         margin: 0,
         filename: `QuickBill_${finalBookingId}_${guestName.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
       };
 
+      const parentElement = element.parentElement;
+      const originalOverflow = parentElement ? parentElement.style.overflow : '';
+      if (parentElement) parentElement.style.overflow = 'visible';
+
       html2pdf().set(opt).from(element).save().then(() => {
+        if (parentElement) parentElement.style.overflow = originalOverflow;
         setIsDownloading(false);
         // Reset state
         setGuestName("");
@@ -190,6 +195,7 @@ function QuickBillPage() {
         setIsExtraBed(false);
         setBookingId(0);
       }).catch((e: any) => {
+        if (parentElement) parentElement.style.overflow = originalOverflow;
         console.error("PDF generation failed:", e);
         setIsDownloading(false);
         alert("Failed to generate PDF document.");
