@@ -1016,7 +1016,7 @@ function AdminDashboard() {
                         type="date" 
                         value={editCheckIn}
                         onChange={(e) => setEditCheckIn(e.target.value)}
-                        className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-gray-900 bg-white"
                       />
                     </div>
                     <div>
@@ -1025,7 +1025,7 @@ function AdminDashboard() {
                         type="date" 
                         value={editCheckOut}
                         onChange={(e) => setEditCheckOut(e.target.value)}
-                        className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-gray-900 bg-white"
                       />
                     </div>
                   </div>
@@ -1041,7 +1041,7 @@ function AdminDashboard() {
                         value={editRoomNumber}
                         onChange={(e) => setEditRoomNumber(e.target.value)}
                         placeholder="e.g. 101"
-                        className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-gray-900 bg-white"
                       />
                     </div>
                     <div>
@@ -1051,7 +1051,7 @@ function AdminDashboard() {
                         value={editAgreedPrice}
                         onChange={(e) => setEditAgreedPrice(e.target.value)}
                         placeholder="e.g. 1500"
-                        className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-gray-900 bg-white"
                       />
                     </div>
                   </div>
@@ -1072,7 +1072,7 @@ function AdminDashboard() {
                               type="text" 
                               value={guest.name}
                               onChange={(e) => handleEditGuestChange(guest.id, 'name', e.target.value)}
-                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-gray-900 bg-white"
                             />
                           </div>
                           <div>
@@ -1081,7 +1081,7 @@ function AdminDashboard() {
                               type="number" 
                               value={guest.age}
                               onChange={(e) => handleEditGuestChange(guest.id, 'age', e.target.value)}
-                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-gray-900 bg-white"
                             />
                           </div>
                         </div>
