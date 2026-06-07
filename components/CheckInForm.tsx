@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Tesseract from 'tesseract.js';
 import { supabase } from '../utils/supabase';
+import imageCompression from 'browser-image-compression';
 
 interface PrimaryGuest {
   name: string;
@@ -191,16 +192,29 @@ export default function CheckInForm() {
 
       const totalGuests = 1 + additionalGuests.length;
       
+      const compressionOptions = {
+        maxSizeMB: 0.3, // Maximum 300KB
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      };
+      
       // 1. Upload files to id_proofs bucket
       for (let i = 0; i < totalGuests; i++) {
         const file = idFiles[i];
         if (file) {
-          const fileExt = file.name.split('.').pop();
+          const fileExt = file.name.split('.').pop() || 'jpg';
           const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          
+          let fileToUpload: File | Blob = file;
+          try {
+            fileToUpload = await imageCompression(file, compressionOptions);
+          } catch (error) {
+            console.error("Compression error:", error);
+          }
           
           const { data, error } = await supabase.storage
             .from('id_proofs')
-            .upload(fileName, file);
+            .upload(fileName, fileToUpload);
             
           if (error) throw error;
 
@@ -213,9 +227,17 @@ export default function CheckInForm() {
 
         const backFile = idBackFiles[i];
         if (backFile) {
-          const fileExt = backFile.name.split('.').pop();
+          const fileExt = backFile.name.split('.').pop() || 'jpg';
           const fileName = `back_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-          const { error } = await supabase.storage.from('id_proofs').upload(fileName, backFile);
+          
+          let backFileToUpload: File | Blob = backFile;
+          try {
+            backFileToUpload = await imageCompression(backFile, compressionOptions);
+          } catch (error) {
+            console.error("Back image compression error:", error);
+          }
+          
+          const { error } = await supabase.storage.from('id_proofs').upload(fileName, backFileToUpload);
           if (error) throw error;
           const { data: { publicUrl } } = supabase.storage.from('id_proofs').getPublicUrl(fileName);
           uploadedBackUrls[i] = publicUrl;
