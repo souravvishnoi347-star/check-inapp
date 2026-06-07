@@ -59,6 +59,7 @@ export default function CheckInForm() {
   
   const [idBackFiles, setIdBackFiles] = useState<{ [key: number]: File | null }>({});
   const [idBackStatus, setIdBackStatus] = useState<{ [key: number]: 'idle' | 'uploaded' }>({});
+  const [bulkIdFiles, setBulkIdFiles] = useState<File[]>([]);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -199,6 +200,26 @@ export default function CheckInForm() {
     setIdBackFiles((prev) => ({ ...prev, [guestIndex]: fileToStore as File }));
   };
 
+  const handleBulkFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const compressionOptions = { maxSizeMB: 0.3, maxWidthOrHeight: 1920, useWebWorker: true };
+    const compressedFiles: File[] = [];
+    
+    for (const file of files) {
+      try {
+        const compressed = await imageCompression(file, compressionOptions);
+        compressedFiles.push(compressed as File);
+      } catch (err) {
+        console.error("Bulk compression failed", err);
+        compressedFiles.push(file); // fallback
+      }
+    }
+    
+    setBulkIdFiles(compressedFiles);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!allIdsValid) return;
@@ -211,37 +232,37 @@ export default function CheckInForm() {
 
       const totalGuests = 1 + additionalGuests.length;
       
-      // 1. Upload files to id_proofs bucket
-      for (let i = 0; i < totalGuests; i++) {
-        const file = idFiles[i];
-        if (file) {
-          // It's already compressed, just upload it
-          const fileExt = file.name ? file.name.split('.').pop() || 'jpg' : 'jpg';
-          const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-          
-          const { data, error } = await supabase.storage
-            .from('id_proofs')
-            .upload(fileName, file);
-            
-          if (error) throw error;
+      // 1. Upload Primary Guest files
+      const primaryFile = idFiles[0];
+      if (primaryFile) {
+        const fileExt = primaryFile.name ? primaryFile.name.split('.').pop() || 'jpg' : 'jpg';
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { error } = await supabase.storage.from('id_proofs').upload(fileName, primaryFile);
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage.from('id_proofs').getPublicUrl(fileName);
+        uploadedUrls[0] = publicUrl;
+      }
 
-          const { data: { publicUrl } } = supabase.storage
-            .from('id_proofs')
-            .getPublicUrl(fileName);
+      const primaryBackFile = idBackFiles[0];
+      if (primaryBackFile) {
+        const fileExt = primaryBackFile.name ? primaryBackFile.name.split('.').pop() || 'jpg' : 'jpg';
+        const fileName = `back_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { error } = await supabase.storage.from('id_proofs').upload(fileName, primaryBackFile);
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage.from('id_proofs').getPublicUrl(fileName);
+        uploadedBackUrls[0] = publicUrl;
+      }
 
-          uploadedUrls[i] = publicUrl;
-        }
-
-        const backFile = idBackFiles[i];
-        if (backFile) {
-          const fileExt = backFile.name ? backFile.name.split('.').pop() || 'jpg' : 'jpg';
-          const fileName = `back_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-          
-          const { error } = await supabase.storage.from('id_proofs').upload(fileName, backFile);
-          if (error) throw error;
-          const { data: { publicUrl } } = supabase.storage.from('id_proofs').getPublicUrl(fileName);
-          uploadedBackUrls[i] = publicUrl;
-        }
+      // 1.5 Upload Bulk Additional IDs
+      const bulkUploadedUrls: string[] = [];
+      for (let i = 0; i < bulkIdFiles.length; i++) {
+        const file = bulkIdFiles[i];
+        const fileExt = file.name ? file.name.split('.').pop() || 'jpg' : 'jpg';
+        const fileName = `bulk_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { error } = await supabase.storage.from('id_proofs').upload(fileName, file);
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage.from('id_proofs').getPublicUrl(fileName);
+        bulkUploadedUrls.push(publicUrl);
       }
 
       // 2. Insert into Bookings
@@ -273,14 +294,15 @@ export default function CheckInForm() {
       });
 
       // Additional Guests
+      let bulkUrlIndex = 0;
       additionalGuests.forEach((guest, i) => {
         guestsToInsert.push({
           booking_id: bookingId,
           name: guest.name,
           age: parseInt(guest.age),
           phone: null,
-          id_image_url: uploadedUrls[i + 1] || null,
-          id_image_back_url: uploadedBackUrls[i + 1] || null
+          id_image_url: bulkUploadedUrls[bulkUrlIndex++] || null,
+          id_image_back_url: bulkUploadedUrls[bulkUrlIndex++] || null
         });
       });
 
@@ -319,6 +341,7 @@ export default function CheckInForm() {
     setIdStatus({});
     setIdBackFiles({});
     setIdBackStatus({});
+    setBulkIdFiles([]);
   };
 
   const totalGuests = 1 + additionalGuests.length;
@@ -521,79 +544,67 @@ export default function CheckInForm() {
             </p>
 
             <div className="space-y-4">
-              {Array.from({ length: totalGuests }).map((_, index) => {
-                const guestName = index === 0 
-                  ? (primaryGuest.name || "Primary Guest") 
-                  : (additionalGuests[index - 1]?.name || `Guest ${index + 1}`);
-
-                const status = idStatus[index] || 'idle';
-                const backStatus = idBackStatus[index] || 'idle';
-
-                let buttonText = 'Front Side (Required)';
-                let buttonClasses = 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm';
-                if (status === 'scanning') {
-                  buttonText = 'Verifying...';
-                  buttonClasses = 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm animate-pulse';
-                } else if (status === 'valid') {
-                  buttonText = '✓ Front Verified';
-                  buttonClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm';
-                } else if (status === 'invalid') {
-                  buttonText = 'Try Again';
-                  buttonClasses = 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm';
-                }
-
-                let backButtonText = 'Back Side (Optional)';
-                let backButtonClasses = 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm';
-                if (backStatus === 'uploaded') {
-                  backButtonText = '✓ Back Uploaded';
-                  backButtonClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm';
-                }
-
-                return (
-                  <div key={index} className="flex flex-col p-4 bg-slate-50 rounded-2xl border border-slate-100 gap-3 transition-all">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="w-full sm:w-1/3">
-                        <p className="font-medium text-slate-700 line-clamp-1">{guestName}'s ID</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Formats: JPG, PNG</p>
-                      </div>
-                      
-                      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-2/3 shrink-0">
-                        <div className="relative w-full">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange(index, e)}
-                            disabled={status === 'scanning'}
-                            className={`absolute inset-0 w-full h-full opacity-0 z-10 ${status !== 'scanning' ? 'cursor-pointer' : ''}`}
-                            title="Upload Front Side"
-                          />
-                          <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border ${buttonClasses}`}>
-                            {buttonText}
-                          </div>
-                        </div>
-
-                        <div className="relative w-full">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleBackFileChange(index, e)}
-                            className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
-                            title="Upload Back Side"
-                          />
-                          <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border ${backButtonClasses}`}>
-                            {backButtonText}
-                          </div>
-                        </div>
+              {/* Primary Guest ID Upload */}
+              <div className="flex flex-col p-4 bg-slate-50 rounded-2xl border border-slate-100 gap-3 transition-all">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="w-full sm:w-1/3">
+                    <p className="font-medium text-slate-700 line-clamp-1">{primaryGuest.name || "Primary Guest"}'s ID</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Formats: JPG, PNG</p>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-2/3 shrink-0">
+                    <div className="relative w-full">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(0, e)}
+                        disabled={idStatus[0] === 'scanning'}
+                        className={`absolute inset-0 w-full h-full opacity-0 z-10 ${idStatus[0] !== 'scanning' ? 'cursor-pointer' : ''}`}
+                        title="Upload Front Side"
+                      />
+                      <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border ${idStatus[0] === 'scanning' ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm animate-pulse' : idStatus[0] === 'valid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm' : idStatus[0] === 'invalid' ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm' : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}>
+                        {idStatus[0] === 'scanning' ? 'Verifying...' : idStatus[0] === 'valid' ? '✓ Front Verified' : idStatus[0] === 'invalid' ? 'Try Again' : 'Front Side (Required)'}
                       </div>
                     </div>
-                    {status === 'invalid' && (
-                      <p className="text-red-500 text-sm font-medium animate-in fade-in slide-in-from-top-1">
-                        Invalid ID detected: Please upload a clear photo of the Front Side of a valid Government ID
-                      </p>
-                    )}
+
+                    <div className="relative w-full">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleBackFileChange(0, e)}
+                        className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+                        title="Upload Back Side"
+                      />
+                      <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border ${idBackStatus[0] === 'uploaded' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm' : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}>
+                        {idBackStatus[0] === 'uploaded' ? '✓ Back Uploaded' : 'Back Side (Optional)'}
+                      </div>
+                    </div>
                   </div>
-                );
-              })}
+                </div>
+                {idStatus[0] === 'invalid' && (
+                  <p className="text-red-500 text-sm font-medium animate-in fade-in slide-in-from-top-1">
+                    Invalid ID detected: Please upload a clear photo of the Front Side of a valid Government ID
+                  </p>
+                )}
+              </div>
+
+              {/* Bulk Upload for Additional Guests */}
+              {additionalGuests.length > 0 && (
+                <div className="mt-6 p-5 bg-indigo-50 border border-indigo-100 rounded-2xl">
+                  <label className="block text-base font-semibold text-indigo-900 mb-2">Additional Family IDs</label>
+                  <p className="text-sm text-indigo-700 mb-4">Please upload the front and back photos of the IDs for all {additionalGuests.length} additional family members you added above. You can select multiple photos at once.</p>
+                  <input 
+                    type="file" 
+                    multiple 
+                    accept="image/*"
+                    onChange={handleBulkFilesChange}
+                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 transition-colors"
+                  />
+                  {bulkIdFiles.length > 0 && (
+                    <p className="mt-3 text-sm font-bold text-emerald-600">✓ {bulkIdFiles.length} photos selected and compressed.</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
