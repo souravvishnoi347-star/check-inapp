@@ -126,8 +126,17 @@ export default function CheckInForm() {
       return;
     }
 
-    setIdFiles((prev) => ({ ...prev, [guestIndex]: file }));
     setIdStatus((prev) => ({ ...prev, [guestIndex]: 'scanning' }));
+
+    let fileToProcess: File | Blob = file;
+    try {
+      const compressionOptions = { maxSizeMB: 0.3, maxWidthOrHeight: 1920, useWebWorker: true };
+      fileToProcess = await imageCompression(file, compressionOptions);
+    } catch (err) {
+      console.error("Compression before OCR failed:", err);
+    }
+    
+    setIdFiles((prev) => ({ ...prev, [guestIndex]: fileToProcess as File }));
 
     try {
       const checkValid = (t: string) => {
@@ -139,8 +148,8 @@ export default function CheckInForm() {
         return aadhaarRegex.test(t) || panRegex.test(t) || hasKeywords;
       };
 
-      // 1. Scan original image
-      const { data: { text } } = await Tesseract.recognize(file, 'eng');
+      // 1. Scan compressed image
+      const { data: { text } } = await Tesseract.recognize(fileToProcess, 'eng');
       let isValid = checkValid(text.toUpperCase());
 
       // 2. If it fails, the ID might be rotated 90 degrees (landscape card shot in portrait)
@@ -169,15 +178,25 @@ export default function CheckInForm() {
     }
   };
 
-  const handleBackFileChange = (guestIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBackFileChange = async (guestIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (!file) {
       setIdBackFiles((prev) => ({ ...prev, [guestIndex]: null }));
       setIdBackStatus((prev) => ({ ...prev, [guestIndex]: 'idle' }));
       return;
     }
-    setIdBackFiles((prev) => ({ ...prev, [guestIndex]: file }));
+    
     setIdBackStatus((prev) => ({ ...prev, [guestIndex]: 'uploaded' }));
+    
+    let fileToStore: File | Blob = file;
+    try {
+      const compressionOptions = { maxSizeMB: 0.3, maxWidthOrHeight: 1920, useWebWorker: true };
+      fileToStore = await imageCompression(file, compressionOptions);
+    } catch (err) {
+      console.error("Back file compression failed:", err);
+    }
+    
+    setIdBackFiles((prev) => ({ ...prev, [guestIndex]: fileToStore as File }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -192,29 +211,17 @@ export default function CheckInForm() {
 
       const totalGuests = 1 + additionalGuests.length;
       
-      const compressionOptions = {
-        maxSizeMB: 0.3, // Maximum 300KB
-        maxWidthOrHeight: 1920,
-        useWebWorker: true,
-      };
-      
       // 1. Upload files to id_proofs bucket
       for (let i = 0; i < totalGuests; i++) {
         const file = idFiles[i];
         if (file) {
-          const fileExt = file.name.split('.').pop() || 'jpg';
+          // It's already compressed, just upload it
+          const fileExt = file.name ? file.name.split('.').pop() || 'jpg' : 'jpg';
           const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-          
-          let fileToUpload: File | Blob = file;
-          try {
-            fileToUpload = await imageCompression(file, compressionOptions);
-          } catch (error) {
-            console.error("Compression error:", error);
-          }
           
           const { data, error } = await supabase.storage
             .from('id_proofs')
-            .upload(fileName, fileToUpload);
+            .upload(fileName, file);
             
           if (error) throw error;
 
@@ -227,17 +234,10 @@ export default function CheckInForm() {
 
         const backFile = idBackFiles[i];
         if (backFile) {
-          const fileExt = backFile.name.split('.').pop() || 'jpg';
+          const fileExt = backFile.name ? backFile.name.split('.').pop() || 'jpg' : 'jpg';
           const fileName = `back_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
           
-          let backFileToUpload: File | Blob = backFile;
-          try {
-            backFileToUpload = await imageCompression(backFile, compressionOptions);
-          } catch (error) {
-            console.error("Back image compression error:", error);
-          }
-          
-          const { error } = await supabase.storage.from('id_proofs').upload(fileName, backFileToUpload);
+          const { error } = await supabase.storage.from('id_proofs').upload(fileName, backFile);
           if (error) throw error;
           const { data: { publicUrl } } = supabase.storage.from('id_proofs').getPublicUrl(fileName);
           uploadedBackUrls[i] = publicUrl;
