@@ -129,17 +129,22 @@ export default function CheckInForm() {
 
     setIdStatus((prev) => ({ ...prev, [guestIndex]: 'scanning' }));
 
-    let fileToProcess: File | Blob = file;
     try {
-      const compressionOptions = { maxSizeMB: 0.3, maxWidthOrHeight: 1920, useWebWorker: true };
-      fileToProcess = await imageCompression(file, compressionOptions);
-    } catch (err) {
-      console.error("Compression before OCR failed:", err);
-    }
-    
-    setIdFiles((prev) => ({ ...prev, [guestIndex]: fileToProcess as File }));
+      // 1. Run OCR on high-res original for accuracy, compress concurrently for storage
+      const ocrPromise = Tesseract.recognize(file, 'eng').catch(err => {
+        console.error("OCR Promise error:", err);
+        return { data: { text: '' } };
+      });
+      const compressionPromise = imageCompression(file, { maxSizeMB: 0.3, maxWidthOrHeight: 1920, useWebWorker: true }).catch(err => {
+        console.error("Compression error:", err);
+        return file;
+      });
 
-    try {
+      const [ocrResult, compressedFile] = await Promise.all([ocrPromise, compressionPromise]);
+      const { data: { text } } = ocrResult as any;
+
+      setIdFiles((prev) => ({ ...prev, [guestIndex]: compressedFile as File }));
+
       const checkValid = (t: string) => {
         const aadhaarRegex = /\d{4}\s?\d{4}\s?\d{4}/;
         const panRegex = /[A-Z]{5}[0-9]{4}[A-Z]{1}/i;
@@ -149,8 +154,6 @@ export default function CheckInForm() {
         return aadhaarRegex.test(t) || panRegex.test(t) || hasKeywords;
       };
 
-      // 1. Scan compressed image
-      const { data: { text } } = await Tesseract.recognize(fileToProcess, 'eng');
       let isValid = checkValid(text.toUpperCase());
 
       // 2. If it fails, the ID might be rotated 90 degrees (landscape card shot in portrait)
@@ -345,7 +348,7 @@ export default function CheckInForm() {
   };
 
   const totalGuests = 1 + additionalGuests.length;
-  const allIdsValid = Array.from({ length: totalGuests }).every((_, i) => idStatus[i] === 'valid');
+  const allIdsValid = idStatus[0] === 'valid';
 
   if (isSubmitted) {
     return (
