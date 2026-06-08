@@ -170,15 +170,11 @@ export default function CheckInForm() {
       if (isValid) {
         setIdStatus((prev) => ({ ...prev, [guestIndex]: 'valid' }));
       } else {
-        setIdStatus((prev) => ({ ...prev, [guestIndex]: 'invalid' }));
-        setIdFiles((prev) => ({ ...prev, [guestIndex]: null }));
-        e.target.value = '';
+        setIdStatus((prev) => prev[guestIndex] === 'valid' ? prev : { ...prev, [guestIndex]: 'invalid' });
       }
     } catch (error) {
       console.error("OCR Error:", error);
-      setIdStatus((prev) => ({ ...prev, [guestIndex]: 'invalid' }));
-      setIdFiles((prev) => ({ ...prev, [guestIndex]: null }));
-      e.target.value = '';
+      setIdStatus((prev) => prev[guestIndex] === 'valid' ? prev : { ...prev, [guestIndex]: 'invalid' });
     }
   };
 
@@ -585,9 +581,29 @@ export default function CheckInForm() {
                   </div>
                 </div>
                 {idStatus[0] === 'invalid' && (
-                  <p className="text-red-500 text-sm font-medium animate-in fade-in slide-in-from-top-1">
-                    Invalid ID detected: Please upload a clear photo of the Front Side of a valid Government ID
-                  </p>
+                  <div className="flex items-center justify-between mt-2 animate-in fade-in slide-in-from-top-1 bg-red-50 p-3 rounded-xl border border-red-100">
+                    <p className="text-red-600 text-sm font-medium">
+                      Invalid ID detected: Please upload a clear photo of the Front Side of a valid Government ID
+                    </p>
+                    <button 
+                      type="button"
+                      onClick={() => setIdStatus(prev => ({ ...prev, [0]: 'valid' }))}
+                      className="ml-4 px-4 py-2 text-xs font-bold text-red-700 hover:text-red-900 bg-red-100 hover:bg-red-200 rounded-lg transition-colors shrink-0"
+                    >
+                      Skip Verification (Force Accept)
+                    </button>
+                  </div>
+                )}
+                {idStatus[0] === 'scanning' && (
+                  <div className="flex items-center justify-end mt-2 animate-in fade-in slide-in-from-top-1">
+                    <button 
+                      type="button"
+                      onClick={() => setIdStatus(prev => ({ ...prev, [0]: 'valid' }))}
+                      className="px-4 py-2 text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors shrink-0 shadow-sm"
+                    >
+                      Taking too long? Skip Verification
+                    </button>
+                  </div>
                 )}
               </div>
 
