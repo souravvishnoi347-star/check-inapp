@@ -104,7 +104,6 @@ function QuickBillPage() {
         .from("Bookings")
         .insert([{
           status: 'Checked-Out',
-          total_amount: calc.grandTotal,
           check_in_date: checkIn,
           check_out_date: checkOut,
           room_number: roomNumber,

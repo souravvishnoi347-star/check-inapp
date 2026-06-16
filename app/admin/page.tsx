@@ -300,7 +300,7 @@ function AdminDashboard() {
           const currentCalc = getCalculations();
           const { error: updateError } = await supabase
             .from("Bookings")
-            .update({ status: 'Checked-Out', total_amount: currentCalc.grandTotal })
+            .update({ status: 'Checked-Out' })
             .eq('id', selectedBooking.id);
           
           if (updateError) {

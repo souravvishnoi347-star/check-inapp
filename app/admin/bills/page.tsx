@@ -12,7 +12,7 @@ type Booking = {
   check_in_date: string;
   check_out_date: string;
   status: string;
-  total_amount?: number;
+  agreed_price?: number | string;
 };
 
 type Guest = {
@@ -128,7 +128,7 @@ function BillsHistoryPage() {
   });
 
   const totalBills = filteredData.length;
-  const totalRevenue = filteredData.reduce((sum, b) => sum + (b.total_amount || 0), 0);
+  const totalRevenue = filteredData.reduce((sum, b) => sum + (Number(b.agreed_price) || 0), 0);
 
   if (isCheckingSession) {
     return (
@@ -247,7 +247,7 @@ function BillsHistoryPage() {
                           {new Date(booking.check_out_date).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-black text-right">
-                          Rs. {(booking.total_amount || 0).toFixed(2)}
+                          Rs. {(Number(booking.agreed_price) || 0).toFixed(2)}
                         </td>
                       </tr>
                     ))
