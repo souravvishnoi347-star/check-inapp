@@ -70,7 +70,7 @@ function AdminDashboard() {
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState("All Time");
+  const [dateFilter, setDateFilter] = useState("Today");
 
   // Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -449,27 +449,34 @@ function AdminDashboard() {
             </div>
 
             {/* Quick Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-3xl p-6 text-white shadow-lg shadow-indigo-200 relative overflow-hidden">
                 <div className="relative z-10">
                   <p className="text-indigo-100 text-sm font-medium uppercase tracking-wider mb-1">Recent Bookings</p>
-                  <h2 className="text-4xl font-black">{data.length}</h2>
+                  <h2 className="text-4xl font-black">{filteredData.length}</h2>
                 </div>
                 <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>
               </div>
               <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 text-white shadow-lg shadow-emerald-200 relative overflow-hidden">
                 <div className="relative z-10">
                   <p className="text-emerald-100 text-sm font-medium uppercase tracking-wider mb-1">Active Check-ins</p>
-                  <h2 className="text-4xl font-black">{data.filter(b => b.status === 'checked_in').length}</h2>
+                  <h2 className="text-4xl font-black">{filteredData.filter(b => b.status === 'checked_in').length}</h2>
                 </div>
                 <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
               </div>
               <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-3xl p-6 text-white shadow-lg shadow-amber-200 relative overflow-hidden">
                 <div className="relative z-10">
-                  <p className="text-amber-100 text-sm font-medium uppercase tracking-wider mb-1">Total Guests Registered</p>
-                  <h2 className="text-4xl font-black">{data.reduce((acc, curr) => acc + curr.total_guests, 0)}</h2>
+                  <p className="text-amber-100 text-sm font-medium uppercase tracking-wider mb-1">Total Guests</p>
+                  <h2 className="text-4xl font-black">{filteredData.reduce((acc, curr) => acc + curr.total_guests, 0)}</h2>
                 </div>
                 <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>
+              </div>
+              <div className="bg-gradient-to-br from-rose-500 to-rose-600 rounded-3xl p-6 text-white shadow-lg shadow-rose-200 relative overflow-hidden">
+                <div className="relative z-10">
+                  <p className="text-rose-100 text-sm font-medium uppercase tracking-wider mb-1">Total Revenue</p>
+                  <h2 className="text-3xl font-black">Rs. {filteredData.reduce((acc, curr) => acc + (Number(curr.agreed_price) || 0), 0).toLocaleString('en-IN')}</h2>
+                </div>
+                <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>
               </div>
             </div>
 
