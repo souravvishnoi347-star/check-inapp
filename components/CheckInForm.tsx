@@ -538,9 +538,16 @@ export default function CheckInForm() {
           {/* ID Uploads Section */}
           <div className="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-100 transition-all duration-300 hover:shadow-md">
             <h2 className="text-lg sm:text-xl font-semibold text-slate-800 mb-2">Identity Verification</h2>
-            <p className="text-sm text-slate-500 mb-5">
-              Please upload a valid government-issued ID for each guest. OCR verification is required.
-            </p>
+            <div className="mb-5 space-y-3">
+              <p className="text-sm text-slate-500">
+                Please upload a valid government-issued ID for each guest. OCR verification is required.
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-sm font-semibold text-amber-800">
+                  ⚠️ Note: If you have an e-Aadhaar PDF, please take a screenshot of it on your phone and upload the image.
+                </p>
+              </div>
+            </div>
 
             <div className="space-y-4">
               {/* Primary Guest ID Upload */}
