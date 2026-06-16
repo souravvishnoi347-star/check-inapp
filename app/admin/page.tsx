@@ -436,22 +436,12 @@ function AdminDashboard() {
               
               <div className="flex items-center gap-3 w-full md:w-auto">
                 <button 
-                  onClick={() => setIsSettingsModalOpen(true)}
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all font-medium"
-                >
-                  <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" loading="lazy">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Hotel Settings
-                </button>
-                <button 
                   onClick={handleRefresh}
                   disabled={isRefreshing}
                   className="flex items-center justify-center p-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl shadow-sm hover:bg-slate-50 transition-all"
                   title="Refresh Data"
                 >
-                  <svg className={`w-5 h-5 text-indigo-600 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" loading="lazy">
+                  <svg className={`w-5 h-5 text-indigo-600 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 </button>
@@ -465,44 +455,23 @@ function AdminDashboard() {
                   <p className="text-indigo-100 text-sm font-medium uppercase tracking-wider mb-1">Recent Bookings</p>
                   <h2 className="text-4xl font-black">{data.length}</h2>
                 </div>
-                <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20" loading="lazy"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>
+                <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>
               </div>
               <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 text-white shadow-lg shadow-emerald-200 relative overflow-hidden">
                 <div className="relative z-10">
                   <p className="text-emerald-100 text-sm font-medium uppercase tracking-wider mb-1">Active Check-ins</p>
                   <h2 className="text-4xl font-black">{data.filter(b => b.status === 'checked_in').length}</h2>
                 </div>
-                <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20" loading="lazy"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
               </div>
               <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-3xl p-6 text-white shadow-lg shadow-amber-200 relative overflow-hidden">
                 <div className="relative z-10">
                   <p className="text-amber-100 text-sm font-medium uppercase tracking-wider mb-1">Total Guests Registered</p>
                   <h2 className="text-4xl font-black">{data.reduce((acc, curr) => acc + curr.total_guests, 0)}</h2>
                 </div>
-                <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20" loading="lazy"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>
+                <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>
               </div>
             </div>
-
-        <div className="flex-1 overflow-auto p-8">
-          {/* Analytics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
-              <span className="text-sm font-medium text-gray-500 mb-1">Total Bookings</span>
-              <span className="text-3xl font-bold text-gray-900">{filteredData.length}</span>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
-              <span className="text-sm font-medium text-gray-500 mb-1">Active Guests</span>
-              <span className="text-3xl font-bold text-indigo-600">{filteredData.filter(b => b.status !== 'Checked-Out').length}</span>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
-              <span className="text-sm font-medium text-gray-500 mb-1">Available Rooms</span>
-              <span className="text-3xl font-bold text-emerald-600">{25 - filteredData.filter(b => b.status !== 'Checked-Out').length}</span>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
-              <span className="text-sm font-medium text-gray-500 mb-1">Total Revenue</span>
-              <span className="text-3xl font-bold text-amber-600">Rs. {filteredData.reduce((acc, b) => acc + (b.status === 'Checked-Out' ? (b.total_amount || 0) : 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            </div>
-          </div>
 
           {error && (
             <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg border border-red-200">
@@ -669,6 +638,7 @@ function AdminDashboard() {
             </div>
           </div>
         </div>
+        </main>
       </main>
 
       {/* Premium Live Preview Bill Generation Modal */}
