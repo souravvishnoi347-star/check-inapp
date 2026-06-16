@@ -460,7 +460,7 @@ function AdminDashboard() {
               <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 text-white shadow-lg shadow-emerald-200 relative overflow-hidden">
                 <div className="relative z-10">
                   <p className="text-emerald-100 text-sm font-medium uppercase tracking-wider mb-1">Active Check-ins</p>
-                  <h2 className="text-4xl font-black">{filteredData.filter(b => b.status === 'checked_in').length}</h2>
+                  <h2 className="text-4xl font-black">{filteredData.filter(b => b.status !== 'Checked-Out').length}</h2>
                 </div>
                 <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
               </div>
