@@ -270,7 +270,8 @@ export default function CheckInForm() {
         .insert({
           check_in_date: primaryGuest.checkInDate,
           check_out_date: primaryGuest.checkOutDate,
-          agreed_price: primaryGuest.agreedPrice ? parseFloat(primaryGuest.agreedPrice) : null
+          agreed_price: primaryGuest.agreedPrice ? parseFloat(primaryGuest.agreedPrice) : null,
+          status: 'checked_in'
         })
         .select()
         .single();
