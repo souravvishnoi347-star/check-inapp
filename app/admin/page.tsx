@@ -126,7 +126,8 @@ function AdminDashboard() {
       const { data: bookingsData, error: bookingsError } = await supabase
         .from("Bookings")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(50);
 
       if (bookingsError) throw new Error(bookingsError.message);
 
@@ -424,19 +425,63 @@ function AdminDashboard() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden z-0">
-        <header className="bg-white shadow-sm border-b px-8 py-5 flex justify-between items-center shrink-0">
-          <h2 className="text-xl font-semibold text-gray-800">Recent Bookings</h2>
-          <button 
-            onClick={handleRefresh}
-            disabled={isRefreshing || isLoading}
-            className="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-md font-medium hover:bg-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            {isRefreshing ? 'Refreshing...' : 'Refresh'}
-          </button>
-        </header>
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* Header & Settings Button */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/70 backdrop-blur-md p-6 rounded-3xl border border-white/60 shadow-sm">
+              <div>
+                <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Dashboard Overview</h1>
+                <p className="text-slate-500 mt-1">Manage bookings, guests, and hotel settings.</p>
+              </div>
+              
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <button 
+                  onClick={() => setIsSettingsModalOpen(true)}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all font-medium"
+                >
+                  <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" loading="lazy">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Hotel Settings
+                </button>
+                <button 
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="flex items-center justify-center p-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl shadow-sm hover:bg-slate-50 transition-all"
+                  title="Refresh Data"
+                >
+                  <svg className={`w-5 h-5 text-indigo-600 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" loading="lazy">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-3xl p-6 text-white shadow-lg shadow-indigo-200 relative overflow-hidden">
+                <div className="relative z-10">
+                  <p className="text-indigo-100 text-sm font-medium uppercase tracking-wider mb-1">Recent Bookings</p>
+                  <h2 className="text-4xl font-black">{data.length}</h2>
+                </div>
+                <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20" loading="lazy"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>
+              </div>
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 text-white shadow-lg shadow-emerald-200 relative overflow-hidden">
+                <div className="relative z-10">
+                  <p className="text-emerald-100 text-sm font-medium uppercase tracking-wider mb-1">Active Check-ins</p>
+                  <h2 className="text-4xl font-black">{data.filter(b => b.status === 'checked_in').length}</h2>
+                </div>
+                <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20" loading="lazy"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+              </div>
+              <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-3xl p-6 text-white shadow-lg shadow-amber-200 relative overflow-hidden">
+                <div className="relative z-10">
+                  <p className="text-amber-100 text-sm font-medium uppercase tracking-wider mb-1">Total Guests Registered</p>
+                  <h2 className="text-4xl font-black">{data.reduce((acc, curr) => acc + curr.total_guests, 0)}</h2>
+                </div>
+                <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20" loading="lazy"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>
+              </div>
+            </div>
 
         <div className="flex-1 overflow-auto p-8">
           {/* Analytics Grid */}
@@ -955,8 +1000,8 @@ function AdminDashboard() {
                           {guest.id_image_url && (
                             <div className="relative group">
                               <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">Front Side</p>
-                              <a href={guest.id_image_url} target="_blank" rel="noreferrer" className="block w-full relative cursor-pointer">
-                                <img src={guest.id_image_url} alt={`${guest.name} ID Front`} className="w-full object-contain max-h-[250px] rounded shadow-sm bg-white" />
+                              <a href={guest.id_image_url} target="_blank" rel="noreferrer" className="block w-full relative cursor-pointer group-hover:shadow-lg transition-all rounded-lg overflow-hidden border border-slate-200">
+                                <img loading="lazy" src={guest.id_image_url} alt={`${guest.name} ID Front`} className="w-full object-contain max-h-[250px] bg-white transition-transform duration-500 group-hover:scale-105" />
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded">
                                   <span className="text-white font-medium bg-black/70 px-3 py-1.5 rounded-lg text-xs flex items-center gap-2">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
@@ -969,8 +1014,8 @@ function AdminDashboard() {
                           {guest.id_image_back_url && (
                             <div className="relative group pt-4 border-t border-gray-200">
                               <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">Back Side</p>
-                              <a href={guest.id_image_back_url} target="_blank" rel="noreferrer" className="block w-full relative cursor-pointer">
-                                <img src={guest.id_image_back_url} alt={`${guest.name} ID Back`} className="w-full object-contain max-h-[250px] rounded shadow-sm bg-white" />
+                              <a href={guest.id_image_back_url} target="_blank" rel="noreferrer" className="block w-full relative cursor-pointer group-hover:shadow-lg transition-all rounded-lg overflow-hidden border border-slate-200">
+                                <img loading="lazy" src={guest.id_image_back_url} alt={`${guest.name} ID Back`} className="w-full object-contain max-h-[250px] bg-white transition-transform duration-500 group-hover:scale-105" />
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded">
                                   <span className="text-white font-medium bg-black/70 px-3 py-1.5 rounded-lg text-xs flex items-center gap-2">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>

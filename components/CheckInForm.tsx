@@ -348,8 +348,8 @@ export default function CheckInForm() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 font-sans flex items-center justify-center">
-        <div className="w-full max-w-md mx-auto bg-white p-8 sm:p-10 rounded-[2rem] shadow-xl border border-slate-100 text-center animate-in zoom-in duration-300">
+      <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-100 via-slate-50 to-purple-100 py-12 px-4 sm:px-6 lg:px-8 font-sans flex items-center justify-center">
+        <div className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-xl p-8 sm:p-10 rounded-[2rem] shadow-2xl border border-white/50 text-center animate-in zoom-in duration-300">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -371,8 +371,8 @@ export default function CheckInForm() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 font-sans text-slate-800 flex items-center justify-center">
-      <div className="w-full max-w-xl mx-auto space-y-8">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-100 via-slate-50 to-purple-100 py-8 px-4 sm:px-6 lg:px-8 font-sans text-slate-800 flex items-center justify-center">
+      <div className="w-full max-w-xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         
         {/* Header */}
         <div className="text-center space-y-2">
@@ -387,7 +387,7 @@ export default function CheckInForm() {
         <form onSubmit={handleSubmit} className="space-y-6">
           
           {/* Primary Guest Card */}
-          <div className="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-100 transition-all duration-300 hover:shadow-md">
+          <div className="bg-white/70 backdrop-blur-xl p-5 sm:p-6 rounded-3xl shadow-lg border border-white/60 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
             <div className="flex items-center gap-3 mb-5">
               <div className="bg-indigo-100 text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
                 1
@@ -479,7 +479,7 @@ export default function CheckInForm() {
 
           {/* Additional Guests */}
           {additionalGuests.map((guest, index) => (
-            <div key={index} className="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-100 transition-all duration-300 hover:shadow-md">
+            <div key={index} className="bg-white/70 backdrop-blur-xl p-5 sm:p-6 rounded-3xl shadow-lg border border-white/60 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
                   <div className="bg-slate-100 text-slate-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
@@ -536,7 +536,7 @@ export default function CheckInForm() {
           </button>
 
           {/* ID Uploads Section */}
-          <div className="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-100 transition-all duration-300 hover:shadow-md">
+          <div className="bg-white/70 backdrop-blur-xl p-5 sm:p-6 rounded-3xl shadow-lg border border-white/60 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
             <h2 className="text-lg sm:text-xl font-semibold text-slate-800 mb-2">Identity Verification</h2>
             <div className="mb-5 space-y-3">
               <p className="text-sm text-slate-500">
@@ -551,7 +551,7 @@ export default function CheckInForm() {
 
             <div className="space-y-4">
               {/* Primary Guest ID Upload */}
-              <div className="flex flex-col p-4 bg-slate-50 rounded-2xl border border-slate-100 gap-3 transition-all">
+              <div className="flex flex-col p-4 bg-white/50 rounded-2xl border border-white/60 gap-3 transition-all shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="w-full sm:w-1/3">
                     <p className="font-medium text-slate-700 line-clamp-1">{primaryGuest.name || "Primary Guest"}'s ID</p>
