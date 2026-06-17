@@ -325,9 +325,9 @@ export default function CheckInForm() {
       // 4. On successful save
       setIsSubmitted(true);
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Submission Error:", err);
-      alert("Failed to complete check-in. Please check console for details.");
+      alert("Failed to complete check-in: " + (err?.message || JSON.stringify(err) || "Unknown error"));
     } finally {
       setIsSubmitting(false);
     }
