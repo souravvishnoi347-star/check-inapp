@@ -71,6 +71,8 @@ function AdminDashboard() {
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("Today");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
 
   // Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -383,27 +385,32 @@ function AdminDashboard() {
     let matchesDate = true;
     if (dateFilter !== "All Time") {
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      today.setHours(0,0,0,0);
+
       const bookingDate = new Date(booking.check_in_date);
-      
+      bookingDate.setHours(0,0,0,0);
+
       if (dateFilter === "Today") {
-        matchesDate = bookingDate >= today && bookingDate < new Date(today.getTime() + 86400000);
+        matchesDate = bookingDate.getTime() === today.getTime();
       } else if (dateFilter === "This Week") {
-        const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
-        firstDayOfWeek.setHours(0, 0, 0, 0);
+        const firstDayOfWeek = new Date(today.getTime());
+        firstDayOfWeek.setDate(today.getDate() - today.getDay());
         matchesDate = bookingDate >= firstDayOfWeek;
       } else if (dateFilter === "This Month") {
-        matchesDate = bookingDate.getMonth() === new Date().getMonth() && bookingDate.getFullYear() === new Date().getFullYear();
-      } else {
-        const selectedDate = new Date(dateFilter);
-        selectedDate.setHours(0, 0, 0, 0);
+        matchesDate = bookingDate.getMonth() === today.getMonth() && bookingDate.getFullYear() === today.getFullYear();
+      } else if (dateFilter === "Custom Range") {
+        const start = customStartDate ? new Date(customStartDate) : null;
+        if (start) start.setHours(0,0,0,0);
+        const end = customEndDate ? new Date(customEndDate) : null;
+        if (end) end.setHours(23,59,59,999);
         
-        const bIn = new Date(booking.check_in_date);
-        bIn.setHours(0, 0, 0, 0);
-        const bOut = new Date(booking.check_out_date);
-        bOut.setHours(0, 0, 0, 0);
-        
-        matchesDate = selectedDate >= bIn && selectedDate <= bOut;
+        if (start && end) {
+          matchesDate = bookingDate >= start && bookingDate <= end;
+        } else if (start) {
+          matchesDate = bookingDate >= start;
+        } else if (end) {
+          matchesDate = bookingDate <= end;
+        }
       }
     }
 
@@ -502,18 +509,14 @@ function AdminDashboard() {
               />
             </div>
             
-            <div className="w-full sm:w-auto flex items-center gap-2">
-              <input
-                type="date"
-                value={["All Time", "Today", "This Week", "This Month"].includes(dateFilter) ? "" : dateFilter}
-                onChange={(e) => setDateFilter(e.target.value || "All Time")}
-                className="w-full sm:w-auto p-2.5 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-medium text-gray-700"
-              />
+            <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-2">
               <select
-                value={["All Time", "Today", "This Week", "This Month"].includes(dateFilter) ? dateFilter : "Custom"}
+                value={dateFilter}
                 onChange={(e) => {
-                  if (e.target.value !== "Custom") {
-                    setDateFilter(e.target.value);
+                  setDateFilter(e.target.value);
+                  if (e.target.value !== "Custom Range") {
+                    setCustomStartDate("");
+                    setCustomEndDate("");
                   }
                 }}
                 className="w-full sm:w-auto p-2.5 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-medium text-gray-700"
@@ -522,8 +525,28 @@ function AdminDashboard() {
                 <option value="Today">Today's Check-ins</option>
                 <option value="This Week">This Week</option>
                 <option value="This Month">This Month</option>
-                <option value="Custom" disabled hidden>Custom Date</option>
+                <option value="Custom Range">Custom Date Range</option>
               </select>
+
+              {dateFilter === "Custom Range" && (
+                <div className="flex items-center gap-2 w-full sm:w-auto animate-in fade-in slide-in-from-left-2">
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="w-full sm:w-auto p-2.5 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-medium text-gray-700"
+                    title="Start Date"
+                  />
+                  <span className="text-gray-500 font-medium px-1">to</span>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="w-full sm:w-auto p-2.5 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-medium text-gray-700"
+                    title="End Date"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
