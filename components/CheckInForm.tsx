@@ -560,32 +560,92 @@ export default function CheckInForm() {
                   </div>
                   
                   <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-2/3 shrink-0">
-                    <div className="relative w-full">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleFileChange(0, e)}
-                        disabled={idStatus[0] === 'scanning'}
-                        className={`absolute inset-0 w-full h-full opacity-0 z-10 ${idStatus[0] !== 'scanning' ? 'cursor-pointer' : ''}`}
-                        title="Upload Front Side"
-                      />
-                      <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border flex items-center justify-center gap-2 ${idStatus[0] === 'scanning' ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm animate-pulse' : idStatus[0] === 'valid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm' : idStatus[0] === 'invalid' ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm' : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}>
-                        {idStatus[0] === 'scanning' ? 'Verifying...' : idStatus[0] === 'valid' ? '✓ Front Verified' : idStatus[0] === 'invalid' ? 'Try Again' : <><span className="text-lg">📷</span> Front Side (Required)</>}
+                    {idStatus[0] === 'valid' || idStatus[0] === 'scanning' ? (
+                      <div className="relative w-full">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileChange(0, e)}
+                          disabled={idStatus[0] === 'scanning'}
+                          className={`absolute inset-0 w-full h-full opacity-0 z-10 ${idStatus[0] !== 'scanning' ? 'cursor-pointer' : ''}`}
+                          title="Change Front Side"
+                        />
+                        <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border flex items-center justify-center gap-2 ${idStatus[0] === 'scanning' ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm animate-pulse' : 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm'}`}>
+                          {idStatus[0] === 'scanning' ? 'Verifying...' : '✓ Front Verified'}
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex gap-2 w-full">
+                        <div className="relative w-1/2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={(e) => handleFileChange(0, e)}
+                            className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+                            title="Take Photo"
+                          />
+                          <div className={`w-full text-center px-1 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors border flex items-center justify-center gap-1 ${idStatus[0] === 'invalid' ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm' : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}>
+                            <span className="text-base">📷</span> Camera
+                          </div>
+                        </div>
+                        <div className="relative w-1/2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileChange(0, e)}
+                            className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+                            title="Upload from Gallery"
+                          />
+                          <div className={`w-full text-center px-1 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors border flex items-center justify-center gap-1 ${idStatus[0] === 'invalid' ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm' : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}>
+                            <span className="text-base">📁</span> Gallery
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
-                    <div className="relative w-full">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleBackFileChange(0, e)}
-                        className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
-                        title="Upload Back Side"
-                      />
-                      <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border flex items-center justify-center gap-2 ${idBackStatus[0] === 'uploaded' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm' : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}>
-                        {idBackStatus[0] === 'uploaded' ? '✓ Back Uploaded' : <><span className="text-lg">📷</span> Back Side (Optional)</>}
+                    {idBackStatus[0] === 'uploaded' ? (
+                      <div className="relative w-full">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleBackFileChange(0, e)}
+                          className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+                          title="Change Back Side"
+                        />
+                        <div className="w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm">
+                          ✓ Back Uploaded
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex gap-2 w-full">
+                        <div className="relative w-1/2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={(e) => handleBackFileChange(0, e)}
+                            className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+                            title="Take Photo"
+                          />
+                          <div className="w-full text-center px-1 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors border flex items-center justify-center gap-1 bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm">
+                            <span className="text-base">📷</span> Camera
+                          </div>
+                        </div>
+                        <div className="relative w-1/2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleBackFileChange(0, e)}
+                            className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+                            title="Upload from Gallery"
+                          />
+                          <div className="w-full text-center px-1 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors border flex items-center justify-center gap-1 bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm">
+                            <span className="text-base">📁</span> Gallery
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 {idStatus[0] === 'invalid' && (
