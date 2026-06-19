@@ -345,7 +345,7 @@ export default function CheckInForm() {
   };
 
   const totalGuests = 1 + additionalGuests.length;
-  const allIdsValid = idStatus[0] === 'valid';
+  const allIdsValid = idStatus[0] === 'valid' && (additionalGuests.length === 0 || bulkIdFiles.length >= additionalGuests.length);
 
   if (isSubmitted) {
     return (
@@ -569,8 +569,8 @@ export default function CheckInForm() {
                         className={`absolute inset-0 w-full h-full opacity-0 z-10 ${idStatus[0] !== 'scanning' ? 'cursor-pointer' : ''}`}
                         title="Upload Front Side"
                       />
-                      <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border ${idStatus[0] === 'scanning' ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm animate-pulse' : idStatus[0] === 'valid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm' : idStatus[0] === 'invalid' ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm' : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}>
-                        {idStatus[0] === 'scanning' ? 'Verifying...' : idStatus[0] === 'valid' ? '✓ Front Verified' : idStatus[0] === 'invalid' ? 'Try Again' : 'Front Side (Required)'}
+                      <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border flex items-center justify-center gap-2 ${idStatus[0] === 'scanning' ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm animate-pulse' : idStatus[0] === 'valid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm' : idStatus[0] === 'invalid' ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm' : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}>
+                        {idStatus[0] === 'scanning' ? 'Verifying...' : idStatus[0] === 'valid' ? '✓ Front Verified' : idStatus[0] === 'invalid' ? 'Try Again' : <><span className="text-lg">📷</span> Front Side (Required)</>}
                       </div>
                     </div>
 
@@ -582,8 +582,8 @@ export default function CheckInForm() {
                         className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
                         title="Upload Back Side"
                       />
-                      <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border ${idBackStatus[0] === 'uploaded' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm' : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}>
-                        {idBackStatus[0] === 'uploaded' ? '✓ Back Uploaded' : 'Back Side (Optional)'}
+                      <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border flex items-center justify-center gap-2 ${idBackStatus[0] === 'uploaded' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm' : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}>
+                        {idBackStatus[0] === 'uploaded' ? '✓ Back Uploaded' : <><span className="text-lg">📷</span> Back Side (Optional)</>}
                       </div>
                     </div>
                   </div>
@@ -645,7 +645,14 @@ export default function CheckInForm() {
                 : 'bg-slate-300 shadow-none cursor-not-allowed text-slate-500'
             }`}
           >
-            {isSubmitting ? 'Saving Data...' : (allIdsValid ? 'Complete Check-in' : 'Please Verify All IDs')}
+            {isSubmitting 
+              ? 'Saving Data...' 
+              : allIdsValid 
+                ? 'Complete Check-in' 
+                : (idStatus[0] !== 'valid') 
+                  ? 'Please Verify Primary ID' 
+                  : `Upload ${additionalGuests.length - bulkIdFiles.length} more ID(s) for additional guests`
+            }
           </button>
           
         </form>
