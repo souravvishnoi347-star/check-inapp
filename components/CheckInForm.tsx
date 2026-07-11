@@ -12,11 +12,9 @@ interface PrimaryGuest {
   checkInDate: string;
   checkOutDate: string;
   agreedPrice: string;
-}
-
-interface AdditionalGuest {
-  name: string;
-  age: string;
+  paymentType: 'cash' | 'credit';
+  maleGuests: string;
+  femaleGuests: string;
 }
 
 const rotateImage = (file: File | Blob): Promise<Blob> => {
@@ -51,9 +49,11 @@ export default function CheckInForm() {
     checkInDate: '',
     checkOutDate: '',
     agreedPrice: '',
+    paymentType: 'cash',
+    maleGuests: '1',
+    femaleGuests: '0',
   });
 
-  const [additionalGuests, setAdditionalGuests] = useState<AdditionalGuest[]>([]);
   const [idFiles, setIdFiles] = useState<{ [key: number]: File | null }>({});
   const [idStatus, setIdStatus] = useState<{ [key: number]: 'idle' | 'scanning' | 'valid' | 'invalid' }>({});
   
@@ -63,58 +63,9 @@ export default function CheckInForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handlePrimaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePrimaryChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setPrimaryGuest((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleAddGuest = () => {
-    setAdditionalGuests((prev) => [...prev, { name: '', age: '' }]);
-  };
-
-  const handleRemoveGuest = (index: number) => {
-    setAdditionalGuests((prev) => prev.filter((_, i) => i !== index));
-    setIdFiles((prev) => {
-      const newFiles = { ...prev };
-      for (let i = index + 1; i <= additionalGuests.length; i++) {
-        newFiles[i] = newFiles[i + 1];
-      }
-      delete newFiles[additionalGuests.length];
-      return newFiles;
-    });
-    setIdStatus((prev) => {
-      const newStatus = { ...prev };
-      for (let i = index + 1; i <= additionalGuests.length; i++) {
-        newStatus[i] = newStatus[i + 1];
-      }
-      delete newStatus[additionalGuests.length];
-      return newStatus;
-    });
-    setIdBackFiles((prev) => {
-      const newFiles = { ...prev };
-      for (let i = index + 1; i <= additionalGuests.length; i++) {
-        newFiles[i] = newFiles[i + 1];
-      }
-      delete newFiles[additionalGuests.length];
-      return newFiles;
-    });
-    setIdBackStatus((prev) => {
-      const newStatus = { ...prev };
-      for (let i = index + 1; i <= additionalGuests.length; i++) {
-        newStatus[i] = newStatus[i + 1];
-      }
-      delete newStatus[additionalGuests.length];
-      return newStatus;
-    });
-  };
-
-  const handleAdditionalGuestChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setAdditionalGuests((prev) => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [name]: value };
-      return updated;
-    });
   };
 
   const handleFileChange = async (guestIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -208,38 +159,42 @@ export default function CheckInForm() {
       const uploadedUrls: { [key: number]: string } = {};
       const uploadedBackUrls: { [key: number]: string } = {};
 
-      const totalGuests = 1 + additionalGuests.length;
-      
-      // 1. Upload All Files
-      for (let i = 0; i < totalGuests; i++) {
-        const file = idFiles[i];
-        if (file) {
-          const fileExt = file.name ? file.name.split('.').pop() || 'jpg' : 'jpg';
-          const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-          const { error } = await supabase.storage.from('id_proofs').upload(fileName, file);
-          if (error) throw error;
-          const { data: { publicUrl } } = supabase.storage.from('id_proofs').getPublicUrl(fileName);
-          uploadedUrls[i] = publicUrl;
-        }
-
-        const backFile = idBackFiles[i];
-        if (backFile) {
-          const fileExt = backFile.name ? backFile.name.split('.').pop() || 'jpg' : 'jpg';
-          const fileName = `back_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-          const { error } = await supabase.storage.from('id_proofs').upload(fileName, backFile);
-          if (error) throw error;
-          const { data: { publicUrl } } = supabase.storage.from('id_proofs').getPublicUrl(fileName);
-          uploadedBackUrls[i] = publicUrl;
-        }
+      // Upload primary guest ID files only
+      const file = idFiles[0];
+      if (file) {
+        const fileExt = file.name ? file.name.split('.').pop() || 'jpg' : 'jpg';
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { error } = await supabase.storage.from('id_proofs').upload(fileName, file);
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage.from('id_proofs').getPublicUrl(fileName);
+        uploadedUrls[0] = publicUrl;
       }
 
-      // 2. Insert into Bookings
+      const backFile = idBackFiles[0];
+      if (backFile) {
+        const fileExt = backFile.name ? backFile.name.split('.').pop() || 'jpg' : 'jpg';
+        const fileName = `back_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { error } = await supabase.storage.from('id_proofs').upload(fileName, backFile);
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage.from('id_proofs').getPublicUrl(fileName);
+        uploadedBackUrls[0] = publicUrl;
+      }
+
+      // Calculate total guests
+      const maleCount = parseInt(primaryGuest.maleGuests) || 0;
+      const femaleCount = parseInt(primaryGuest.femaleGuests) || 0;
+      const totalGuests = maleCount + femaleCount;
+
+      // Insert into Bookings
       const { data: bookingData, error: bookingError } = await supabase
         .from('Bookings')
         .insert({
           check_in_date: primaryGuest.checkInDate,
           check_out_date: primaryGuest.checkOutDate,
           agreed_price: primaryGuest.agreedPrice ? parseFloat(primaryGuest.agreedPrice) : null,
+          payment_type: primaryGuest.paymentType,
+          male_guests: maleCount,
+          female_guests: femaleCount,
           status: 'checked_in'
         })
         .select()
@@ -249,49 +204,30 @@ export default function CheckInForm() {
       
       const bookingId = bookingData.id;
 
-      // 3. Prepare and Insert Guests
-      const guestsToInsert: any[] = [];
-      
-      // Primary Guest
-      guestsToInsert.push({
+      // Insert primary guest only
+      const guestData: any = {
         booking_id: bookingId,
         name: primaryGuest.name,
         age: parseInt(primaryGuest.age),
         phone: primaryGuest.phone || null,
         id_image_url: uploadedUrls[0] || null,
         id_image_back_url: uploadedBackUrls[0] || null
-      });
-
-      // Additional Guests
-      additionalGuests.forEach((guest, index) => {
-        const i = index + 1;
-        guestsToInsert.push({
-          booking_id: bookingId,
-          name: guest.name,
-          age: parseInt(guest.age),
-          phone: null,
-          id_image_url: uploadedUrls[i] || null,
-          id_image_back_url: uploadedBackUrls[i] || null
-        });
-      });
+      };
 
       const { error: guestsError } = await supabase
         .from('Guests')
-        .insert(guestsToInsert);
+        .insert([guestData]);
 
       if (guestsError && guestsError.message?.includes('id_image_back_url')) {
         alert("WARNING: The 'id_image_back_url' column is missing in your Supabase Guests table! The back images were not saved. Please add it.");
-        const fallbackGuests = guestsToInsert.map(g => {
-          const { id_image_back_url, ...rest } = g;
-          return rest;
-        });
-        const { error: fallbackError } = await supabase.from('Guests').insert(fallbackGuests);
+        const { id_image_back_url, ...rest } = guestData;
+        const { error: fallbackError } = await supabase.from('Guests').insert([rest]);
         if (fallbackError) throw fallbackError;
       } else if (guestsError) {
         throw guestsError;
       }
 
-      // 4. On successful save
+      // On successful save
       setIsSubmitted(true);
       
     } catch (err: any) {
@@ -304,16 +240,15 @@ export default function CheckInForm() {
 
   const handleReset = () => {
     setIsSubmitted(false);
-    setPrimaryGuest({ name: '', age: '', phone: '', checkInDate: '', checkOutDate: '', agreedPrice: '' });
-    setAdditionalGuests([]);
+    setPrimaryGuest({ name: '', age: '', phone: '', checkInDate: '', checkOutDate: '', agreedPrice: '', paymentType: 'cash', maleGuests: '1', femaleGuests: '0' });
     setIdFiles({});
     setIdStatus({});
     setIdBackFiles({});
     setIdBackStatus({});
   };
 
-  const totalGuests = 1 + additionalGuests.length;
-  const allIdsValid = Array.from({ length: totalGuests }).every((_, i) => idStatus[i] === 'valid');
+  // Only primary guest ID needs to be valid
+  const allIdsValid = idStatus[0] === 'valid';
 
   if (isSubmitted) {
     return (
@@ -326,7 +261,7 @@ export default function CheckInForm() {
           </div>
           <h2 className="text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">Check-in Complete!</h2>
           <p className="text-slate-500 mb-8 text-lg leading-relaxed">
-            Welcome to Hotel Satyam Swagat. Your details have been verified. Please collect your room keys from the reception.
+            Welcome! Your details have been verified successfully. Please collect your room keys from the reception.
           </p>
           <button
             onClick={handleReset}
@@ -361,7 +296,7 @@ export default function CheckInForm() {
               <div className="bg-indigo-100 text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
                 1
               </div>
-              <h2 className="text-lg sm:text-xl font-semibold text-slate-800">Primary Guest</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-800">Guest Details</h2>
             </div>
 
             <div className="space-y-4">
@@ -430,7 +365,9 @@ export default function CheckInForm() {
                   />
                 </div>
               </div>
-              <div className="mt-4">
+
+              {/* Agreed Price */}
+              <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1">Agreed Price (Rs.) *</label>
                 <input
                   type="number"
@@ -443,199 +380,86 @@ export default function CheckInForm() {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-colors outline-none text-slate-700 bg-slate-50 focus:bg-white font-semibold"
                 />
               </div>
+
+              {/* Payment Type - Cash / Credit */}
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-2">Payment Type *</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPrimaryGuest(prev => ({ ...prev, paymentType: 'cash' }))}
+                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all border-2 ${
+                      primaryGuest.paymentType === 'cash'
+                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm shadow-emerald-100'
+                        : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Cash
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrimaryGuest(prev => ({ ...prev, paymentType: 'credit' }))}
+                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all border-2 ${
+                      primaryGuest.paymentType === 'credit'
+                        ? 'bg-amber-50 border-amber-500 text-amber-700 shadow-sm shadow-amber-100'
+                        : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    Credit
+                  </button>
+                </div>
+              </div>
+
+              {/* Guest Count - Male & Female */}
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-2">Guest Count *</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3">
+                    <label className="block text-xs font-semibold text-blue-600 mb-1.5 uppercase tracking-wider">Male</label>
+                    <input
+                      type="number"
+                      name="maleGuests"
+                      value={primaryGuest.maleGuests}
+                      onChange={handlePrimaryChange}
+                      required
+                      min="0"
+                      placeholder="0"
+                      className="w-full px-3 py-2.5 rounded-lg border border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors outline-none text-slate-700 bg-white font-bold text-center text-lg"
+                    />
+                  </div>
+                  <div className="bg-pink-50/50 border border-pink-100 rounded-xl p-3">
+                    <label className="block text-xs font-semibold text-pink-600 mb-1.5 uppercase tracking-wider">Female</label>
+                    <input
+                      type="number"
+                      name="femaleGuests"
+                      value={primaryGuest.femaleGuests}
+                      onChange={handlePrimaryChange}
+                      required
+                      min="0"
+                      placeholder="0"
+                      className="w-full px-3 py-2.5 rounded-lg border border-pink-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-colors outline-none text-slate-700 bg-white font-bold text-center text-lg"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400 mt-2 text-center">
+                  Total Guests: <span className="font-bold text-slate-600">{(parseInt(primaryGuest.maleGuests) || 0) + (parseInt(primaryGuest.femaleGuests) || 0)}</span>
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Additional Guests */}
-          {additionalGuests.map((guest, index) => {
-            const guestIndex = index + 1;
-            return (
-            <div key={index} className="bg-white/70 backdrop-blur-xl p-5 sm:p-6 rounded-3xl shadow-lg border border-white/60 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="bg-slate-100 text-slate-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
-                    {index + 2}
-                  </div>
-                  <h2 className="text-lg sm:text-xl font-semibold text-slate-800">Additional Guest</h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveGuest(index)}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-full transition-colors text-sm font-medium"
-                >
-                  Remove
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-slate-600 mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={guest.name}
-                    onChange={(e) => handleAdditionalGuestChange(index, e)}
-                    required
-                    placeholder="Jane Doe"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-colors outline-none text-slate-700 bg-slate-50 focus:bg-white"
-                  />
-                </div>
-                <div className="sm:col-span-1">
-                  <label className="block text-sm font-medium text-slate-600 mb-1">Age</label>
-                  <input
-                    type="number"
-                    name="age"
-                    value={guest.age}
-                    onChange={(e) => handleAdditionalGuestChange(index, e)}
-                    required
-                    min="0"
-                    placeholder="25"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-colors outline-none text-slate-700 bg-slate-50 focus:bg-white"
-                  />
-                </div>
-              </div>
-
-              {/* Individual ID Upload for Additional Guest */}
-              <div className="flex flex-col p-4 bg-white/50 rounded-2xl border border-white/60 gap-3 transition-all shadow-sm mt-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="w-full sm:w-1/3">
-                    <p className="font-medium text-slate-700 line-clamp-1">{guest.name || "Guest"}'s ID</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Formats: JPG, PNG</p>
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-2/3 shrink-0">
-                    {idStatus[guestIndex] === 'valid' || idStatus[guestIndex] === 'scanning' ? (
-                      <div className="relative w-full">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileChange(guestIndex, e)}
-                          disabled={idStatus[guestIndex] === 'scanning'}
-                          className={`absolute inset-0 w-full h-full opacity-0 z-10 ${idStatus[guestIndex] !== 'scanning' ? 'cursor-pointer' : ''}`}
-                          title="Change Front Side"
-                        />
-                        <div className={`w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border flex items-center justify-center gap-2 ${idStatus[guestIndex] === 'scanning' ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm animate-pulse' : 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm'}`}>
-                          {idStatus[guestIndex] === 'scanning' ? 'Verifying...' : '✓ Front Verified'}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2 w-full">
-                        <div className="relative w-1/2">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            onChange={(e) => handleFileChange(guestIndex, e)}
-                            className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
-                            title="Take Photo"
-                          />
-                          <div className={`w-full text-center px-1 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors border flex items-center justify-center gap-1 ${idStatus[guestIndex] === 'invalid' ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm' : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}>
-                            <span className="text-base">📷</span> Camera
-                          </div>
-                        </div>
-                        <div className="relative w-1/2">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange(guestIndex, e)}
-                            className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
-                            title="Upload from Gallery"
-                          />
-                          <div className={`w-full text-center px-1 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors border flex items-center justify-center gap-1 ${idStatus[guestIndex] === 'invalid' ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm' : 'bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}>
-                            <span className="text-base">📁</span> Gallery
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {idBackStatus[guestIndex] === 'uploaded' ? (
-                      <div className="relative w-full">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleBackFileChange(guestIndex, e)}
-                          className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
-                          title="Change Back Side"
-                        />
-                        <div className="w-full text-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm">
-                          ✓ Back Uploaded
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2 w-full">
-                        <div className="relative w-1/2">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            onChange={(e) => handleBackFileChange(guestIndex, e)}
-                            className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
-                            title="Take Photo"
-                          />
-                          <div className="w-full text-center px-1 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors border flex items-center justify-center gap-1 bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm">
-                            <span className="text-base">📷</span> Camera
-                          </div>
-                        </div>
-                        <div className="relative w-1/2">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleBackFileChange(guestIndex, e)}
-                            className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
-                            title="Upload from Gallery"
-                          />
-                          <div className="w-full text-center px-1 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors border flex items-center justify-center gap-1 bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 shadow-sm">
-                            <span className="text-base">📁</span> Gallery
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {idStatus[guestIndex] === 'invalid' && (
-                  <div className="flex items-center justify-between mt-2 animate-in fade-in slide-in-from-top-1 bg-red-50 p-3 rounded-xl border border-red-100">
-                    <p className="text-red-600 text-sm font-medium">
-                      Invalid ID detected: Please upload a clear photo of the Front Side of a valid Government ID
-                    </p>
-                    <button 
-                      type="button"
-                      onClick={() => setIdStatus(prev => ({ ...prev, [guestIndex]: 'valid' }))}
-                      className="ml-4 px-4 py-2 text-xs font-bold text-red-700 hover:text-red-900 bg-red-100 hover:bg-red-200 rounded-lg transition-colors shrink-0"
-                    >
-                      Skip Verification (Force Accept)
-                    </button>
-                  </div>
-                )}
-                {idStatus[guestIndex] === 'scanning' && (
-                  <div className="flex items-center justify-end mt-2 animate-in fade-in slide-in-from-top-1">
-                    <button 
-                      type="button"
-                      onClick={() => setIdStatus(prev => ({ ...prev, [guestIndex]: 'valid' }))}
-                      className="px-4 py-2 text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors shrink-0 shadow-sm"
-                    >
-                      Taking too long? Skip Verification
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )})}
-
-          {/* Add Guest Button */}
-          <button
-            type="button"
-            onClick={handleAddGuest}
-            className="w-full py-4 border-2 border-dashed border-indigo-200 text-indigo-600 font-semibold rounded-3xl hover:bg-indigo-50 hover:border-indigo-300 transition-all active:scale-[0.98]"
-          >
-            + Add Additional Guest
-          </button>
-
-          {/* ID Uploads Section */}
+          {/* ID Uploads Section - Primary Guest Only */}
           <div className="bg-white/70 backdrop-blur-xl p-5 sm:p-6 rounded-3xl shadow-lg border border-white/60 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
             <h2 className="text-lg sm:text-xl font-semibold text-slate-800 mb-2">Identity Verification</h2>
             <div className="mb-5 space-y-3">
               <p className="text-sm text-slate-500">
-                Please upload a valid government-issued ID for each guest. OCR verification is required.
+                Please upload a valid government-issued ID for the primary guest. OCR verification is required.
               </p>
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <p className="text-sm font-semibold text-amber-800">
@@ -649,7 +473,7 @@ export default function CheckInForm() {
               <div className="flex flex-col p-4 bg-white/50 rounded-2xl border border-white/60 gap-3 transition-all shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="w-full sm:w-1/3">
-                    <p className="font-medium text-slate-700 line-clamp-1">{primaryGuest.name || "Primary Guest"}'s ID</p>
+                    <p className="font-medium text-slate-700 line-clamp-1">{primaryGuest.name || "Primary Guest"}&apos;s ID</p>
                     <p className="text-xs text-slate-500 mt-0.5">Formats: JPG, PNG</p>
                   </div>
                   
@@ -768,8 +592,6 @@ export default function CheckInForm() {
                   </div>
                 )}
               </div>
-
-
             </div>
           </div>
 

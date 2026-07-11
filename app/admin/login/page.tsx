@@ -62,7 +62,7 @@ export default function AdminLogin() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
         <div className="p-8 text-center bg-slate-900 border-b border-slate-800">
           <h1 className="text-3xl font-bold text-white tracking-tight">Admin Login</h1>
-          <p className="text-indigo-200 mt-2 text-sm">Hotel Satyam Swagat</p>
+          <p className="text-indigo-200 mt-2 text-sm">Hotel Management System</p>
         </div>
         
         <div className="p-8">
