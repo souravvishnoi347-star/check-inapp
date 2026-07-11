@@ -417,6 +417,18 @@ function AdminDashboard() {
                 <div className="relative z-10">
                   <p className="text-rose-100 text-sm font-medium uppercase tracking-wider mb-1">Total Revenue</p>
                   <h2 className="text-3xl font-black">Rs. {filteredData.reduce((acc, curr) => acc + (Number(curr.agreed_price) || 0), 0).toLocaleString('en-IN')}</h2>
+                  
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-rose-400/50">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-rose-200 mb-0.5">Cash Sales</p>
+                      <p className="text-sm font-bold">Rs. {filteredData.filter(b => b.payment_type !== 'credit').reduce((acc, curr) => acc + (Number(curr.agreed_price) || 0), 0).toLocaleString('en-IN')}</p>
+                    </div>
+                    <div className="w-px h-6 bg-rose-400/50"></div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-rose-200 mb-0.5">Credit Sales</p>
+                      <p className="text-sm font-bold">Rs. {filteredData.filter(b => b.payment_type === 'credit').reduce((acc, curr) => acc + (Number(curr.agreed_price) || 0), 0).toLocaleString('en-IN')}</p>
+                    </div>
+                  </div>
                 </div>
                 <svg className="absolute right-[-10%] top-[-10%] w-32 h-32 text-white opacity-10" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>
               </div>
