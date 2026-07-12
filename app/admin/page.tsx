@@ -665,11 +665,11 @@ function AdminDashboard() {
                         </div>
                       ) : (
                         <div className="flex flex-col gap-4">
-                          {guest.id_image_url && (
-                            <div className="relative group">
-                              <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">Front Side</p>
-                              <a href={guest.id_image_url} target="_blank" rel="noreferrer" className="block w-full relative cursor-pointer group-hover:shadow-lg transition-all rounded-lg overflow-hidden border border-slate-200">
-                                <img loading="lazy" src={guest.id_image_url} alt={`${guest.name} ID Front`} className="w-full object-contain max-h-[250px] bg-white transition-transform duration-500 group-hover:scale-105" />
+                          {guest.id_image_url && guest.id_image_url.split(',').map((url, i) => (
+                            <div key={`front-${i}`} className="relative group pt-4 first:pt-0 first:border-0 border-t border-gray-200">
+                              <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">ID Document {guest.id_image_url.includes(',') ? i + 1 : 'Front'}</p>
+                              <a href={url.trim()} target="_blank" rel="noreferrer" className="block w-full relative cursor-pointer group-hover:shadow-lg transition-all rounded-lg overflow-hidden border border-slate-200">
+                                <img loading="lazy" src={url.trim()} alt={`${guest.name} ID ${i + 1}`} className="w-full object-contain max-h-[250px] bg-white transition-transform duration-500 group-hover:scale-105" />
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded">
                                   <span className="text-white font-medium bg-black/70 px-3 py-1.5 rounded-lg text-xs flex items-center gap-2">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
@@ -678,7 +678,7 @@ function AdminDashboard() {
                                 </div>
                               </a>
                             </div>
-                          )}
+                          ))}
                           {guest.id_image_back_url && (
                             <div className="relative group pt-4 border-t border-gray-200">
                               <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">Back Side</p>
