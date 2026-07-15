@@ -321,7 +321,8 @@ function AdminDashboard() {
     const query = searchQuery.toLowerCase();
     const matchesSearch = 
       booking.id.toString().includes(query) || 
-      booking.primary_guest_name.toLowerCase().includes(query);
+      booking.primary_guest_name.toLowerCase().includes(query) ||
+      (booking.primary_guest_phone && booking.primary_guest_phone.toLowerCase().includes(query));
 
     let matchesDate = true;
     if (dateFilter !== "All Time") {
@@ -473,7 +474,7 @@ function AdminDashboard() {
               </div>
               <input
                 type="text"
-                placeholder="Search by Guest Name or Booking ID..."
+                placeholder="Search by Name, Phone, or Booking ID..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 w-full p-2.5 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
